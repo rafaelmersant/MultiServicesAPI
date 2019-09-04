@@ -5,47 +5,58 @@ from rest_framework import serializers
 
 
 class ProductCategorySerializer(serializers.HyperlinkedModelSerializer):
-    # companyId = serializers.StringRelatedField(read_only=True)
-    company_Id = serializers.PrimaryKeyRelatedField(read_only=True)
-    # company = CompanySerializer(read_only=True)
-
-    def create(self, validated_data):
-        return ProductCategory.objects.create(**validated_data)
+    company = CompanySerializer(many=False, read_only=True)
+    company_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = ProductCategory
-        fields = ('id', 'description', 'company_Id')
+        fields = ('id', 'description', 'company', 'company_id')
 
 
 class ProductSerializer(serializers.HyperlinkedModelSerializer):
-    companyId = serializers.StringRelatedField(read_only=True)
-    categoryId = serializers.StringRelatedField(read_only=True)
+    company = CompanySerializer(many=False, read_only=True)
+    company_id = serializers.IntegerField(write_only=True)
+
+    category = ProductCategorySerializer(many=False, read_only=True)
+    category_id = serializers.IntegerField(write_only=True)
+
     createdByUser = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Product
-        fields = ('id', 'companyId', 'description', 'descriptionLong',
-                  'price', 'cost', 'itbis', 'categoryId', 'measure', 'model',
-                  'creationDate', 'createdByUser')
+        fields = ('id', 'company', 'company_id',
+                  'description', 'descriptionLong', 'price',
+                  'cost', 'itbis', 'category', 'category_id',
+                  'measure', 'model', 'creationDate', 'createdByUser')
 
 
 class ProductsStockSerializer(serializers.HyperlinkedModelSerializer):
-    companyId = serializers.StringRelatedField(read_only=True)
-    productId = serializers.StringRelatedField(read_only=True)
+    company = CompanySerializer(many=False, read_only=True)
+    company_id = serializers.IntegerField(write_only=True)
+
+    product = ProductSerializer(many=False, read_only=True)
+    product_id = serializers.IntegerField(write_only=True)
+
     modifiedByUser = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = ProductsStock
-        fields = ('id', 'companyId', 'productId', 'quantityAvailable',
+        fields = ('id', 'company', 'company_id', 'product',
+                  'product_id', 'quantityAvailable',
                   'quantityHold', 'lastUpdated', 'modifiedByUser')
 
 
 class ProductsTrackingSerializer(serializers.HyperlinkedModelSerializer):
-    companyId = serializers.StringRelatedField(read_only=True)
-    productId = serializers.StringRelatedField(read_only=True)
+    company = CompanySerializer(many=False, read_only=True)
+    company_id = serializers.IntegerField(write_only=True)
+
+    product = ProductSerializer(many=False, read_only=True)
+    product_id = serializers.IntegerField(write_only=True)
+
     createdByUser = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = ProductsTracking
-        fields = ('id', 'companyId', 'productId', 'typeTracking',
+        fields = ('id', 'company', 'company_id', 'product',
+                  'product_id', 'typeTracking',
                   'quantity', 'creationDate', 'createdByUser')

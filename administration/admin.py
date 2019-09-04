@@ -4,7 +4,7 @@ from .models import User, Customer, Company, FiscalGov
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ['id', 'companyId', 'userName', 'email',
+    list_display = ['id', 'company_id', 'userName', 'email',
                     'fullName', 'creationDate', 'createdByUser']
     list_editable = ('userName',)
     search_fields = ('userName', 'email',)
@@ -24,5 +24,5 @@ class CustomerAdmin(admin.ModelAdmin):
 
 @admin.register(FiscalGov)
 class FiscalGovAdmin(admin.ModelAdmin):
-    list_display = ['id', 'companyId', 'typeDoc', 'start', 'end']
-    search_fields = ('companyId', 'typeDoc',)
+    list_display = ['id', 'company_id', 'typeDoc', 'start', 'end']
+    search_fields = ('company_id', 'typeDoc',)

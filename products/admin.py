@@ -18,11 +18,11 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(ProductsTracking)
 class ProductsTrackingAdmin(admin.ModelAdmin):
-    list_display = ['id', 'productId']
-    search_fields = ('productId',)
+    list_display = ['id', 'product']
+    search_fields = ('product',)
 
 
 @admin.register(ProductsStock)
 class ProductsStockAdmin(admin.ModelAdmin):
-    list_display = ['id', 'productId']
-    search_fields = ('productId',)
+    list_display = ['id', 'product']
+    search_fields = ('product',)

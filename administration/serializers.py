@@ -10,29 +10,36 @@ class CompanySerializer(serializers.HyperlinkedModelSerializer):
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
-    companyId = serializers.StringRelatedField(read_only=True)
+    company = CompanySerializer(many=False, read_only=True)
+    company_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = User
-        fields = ('id', 'companyId', 'userName', 'email',
+        fields = ('id', 'company', 'company_id', 'userName', 'email',
                   'fullName', 'creationDate', 'createdByUser')
 
 
 class CustomerSerializer(serializers.HyperlinkedModelSerializer):
-    companyId = serializers.StringRelatedField(read_only=True)
+    company = CompanySerializer(many=False, read_only=True)
+    company_id = serializers.IntegerField(write_only=True)
+
     createdByUser = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Customer
-        fields = ('id', 'companyId', 'firstName', 'lastName', 'email',
-                  'phoneNumber', 'address', 'creationDate', 'createdByUser')
+        fields = ('id', 'company', 'company_id', 'firstName',
+                  'lastName', 'email', 'phoneNumber', 'address',
+                  'creationDate', 'createdByUser')
 
 
 class FiscalGovSerializer(serializers.HyperlinkedModelSerializer):
-    companyId = serializers.StringRelatedField(read_only=True)
+    company = CompanySerializer(many=False, read_only=True)
+    company_id = serializers.IntegerField(write_only=True)
+
     createdByUser = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = FiscalGov
-        fields = ('id', 'companyId', 'typeDoc', 'start', 'end', 'current',
-                  'dueDate', 'active', 'creationDate', 'createdByUser')
+        fields = ('id', 'company', 'company_id', 'typeDoc', 'start',
+                  'end', 'current', 'dueDate', 'active',
+                  'creationDate', 'createdByUser')

@@ -16,7 +16,7 @@ class Company(models.Model):
 
 
 class User(models.Model):
-    companyId = models.ForeignKey(Company, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
     userName = models.CharField(max_length=50)
     email = models.EmailField()
     password = models.CharField(max_length=150)
@@ -30,7 +30,7 @@ class User(models.Model):
 
 
 class Customer(models.Model):
-    companyId = models.ForeignKey(Company, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
     firstName = models.CharField(max_length=100)
     lastName = models.CharField(max_length=100)
     email = models.EmailField()
@@ -46,7 +46,7 @@ class Customer(models.Model):
 
 
 class FiscalGov(models.Model):
-    companyId = models.ForeignKey(Company, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
     typeDoc = models.CharField(max_length=15)
     start = models.IntegerField()
     end = models.IntegerField()

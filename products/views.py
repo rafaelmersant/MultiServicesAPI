@@ -10,7 +10,7 @@ class ProductList(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'description', 'companyId', 'model']
+    filterset_fields = ['id', 'description', 'company', 'model']
 
     def get_object(self):
         data = Product.objects.all()
@@ -26,7 +26,7 @@ class ProductCategoryList(generics.ListCreateAPIView):
     queryset = ProductCategory.objects.all()
     serializer_class = ProductCategorySerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'description', 'companyId']
+    filterset_fields = ['id', 'description', 'company']
 
     def get_object(self):
         data = ProductCategory.objects.all()
@@ -37,18 +37,12 @@ class ProductCategoryList(generics.ListCreateAPIView):
         )
         return obj
 
-    def post(self, request):
-        serializer = ProductCategorySerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
 class ProductsStockList(generics.ListCreateAPIView):
     queryset = ProductsStock.objects.all()
     serializer_class = ProductsStockSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'companyId', 'productId', 'modifiedByUser']
+    filterset_fields = ['id', 'company', 'product', 'modifiedByUser']
 
     def get_object(self):
         data = ProductsStock.objects.all()
@@ -64,8 +58,8 @@ class ProductsTrackingList(generics.ListCreateAPIView):
     queryset = ProductsTracking.objects.all()
     serializer_class = ProductsTrackingSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'companyId',
-                        'productId', 'typeTracking', 'createdByUser']
+    filterset_fields = ['id', 'company',
+                        'product', 'typeTracking', 'createdByUser']
 
     def get_object(self):
         data = ProductsTracking.objects.all()

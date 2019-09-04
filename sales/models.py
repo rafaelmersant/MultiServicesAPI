@@ -4,8 +4,8 @@ from products.models import Product
 
 
 class InvoicesHeader(models.Model):
-    companyId = models.ForeignKey(Company, on_delete=models.CASCADE)
-    customerId = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     paymentMethod = models.CharField(max_length=20)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
     createdByUser = models.ForeignKey(
@@ -15,8 +15,8 @@ class InvoicesHeader(models.Model):
 
 
 class InvoicesDetail(models.Model):
-    invoiceId = models.ForeignKey(InvoicesHeader, on_delete=models.CASCADE)
-    productId = models.ForeignKey(Product, on_delete=models.CASCADE)
+    invoice = models.ForeignKey(InvoicesHeader, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     price = models.DecimalField(
         max_digits=8, decimal_places=2, null=True, blank=True)
     cost = models.DecimalField(

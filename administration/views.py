@@ -43,7 +43,7 @@ class CustomerList(generics.ListCreateAPIView):
     serializer_class = CustomerSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'firstName', 'lastName',
-                        'email', 'companyId', 'phoneNumber']
+                        'email', 'company_id', 'phoneNumber']
 
     def get_object(self):
         data = Customer.objects.all()
@@ -60,7 +60,7 @@ class FiscalGovList(generics.ListCreateAPIView):
     serializer_class = FiscalGovSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'start', 'end',
-                        'companyId', 'createdByUser']
+                        'company_id', 'createdByUser']
 
     def get_object(self):
         data = FiscalGov.objects.all()

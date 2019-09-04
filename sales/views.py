@@ -9,8 +9,8 @@ class InvoicesHeaderList(generics.ListCreateAPIView):
     queryset = InvoicesHeader.objects.all()
     serializer_class = InvoicesHeaderSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'companyId', 'customerId',
-                        'paymentMethod', 'ncf', 'createdByUser']
+    filterset_fields = ['id', 'company', 'company_id', 'customer',
+                        'customer_id', 'paymentMethod', 'ncf', 'createdByUser']
 
     def get_object(self):
         data = InvoicesHeader.objects.all()
@@ -26,8 +26,8 @@ class InvoicesDetailList(generics.ListCreateAPIView):
     queryset = InvoicesDetail.objects.all()
     serializer_class = InvoicesDetailSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'invoiceId', 'productId',
-                        'creationDate']
+    filterset_fields = ['id', 'invoice', 'invoice_id',
+                        'product', 'product_id', 'creationDate']
 
     def get_object(self):
         data = InvoicesDetail.objects.all()
