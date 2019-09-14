@@ -1,6 +1,7 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
+from rest_framework.response import Response
 from .models import Company, User, Customer, FiscalGov
 from .serializers import CompanySerializer, UserSerializer, \
     CustomerSerializer, FiscalGovSerializer
@@ -12,14 +13,23 @@ class CompanyList(generics.ListCreateAPIView):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'name', 'rnc']
 
-    def get_object(self):
-        data = Company.objects.all()
+    def delete(self, request, pk=None):
+        try:
+            company = Company.objects.get(pk=pk)
+            company.delete()
+        except Company.DoesNotExist:
+            return Response("company does not exist")
 
-        obj = get_object_or_404(
-            data,
-            pk=self.kwargs['pk'],
-        )
-        return obj
+        return Response("deleted")
+
+    def put(self, request, pk, format=None):
+        company = Company.objects.get(pk=pk)
+        serializer = CompanySerializer(company, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
 
 
 class UserList(generics.ListCreateAPIView):
@@ -28,14 +38,25 @@ class UserList(generics.ListCreateAPIView):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'userName', 'email', 'fullName']
 
-    def get_object(self):
-        data = User.objects.all()
+    def delete(self, request, pk=None):
+        try:
+            user = User.objects.get(pk=pk)
+            user.delete()
+        except User.DoesNotExist:
+            return Response("user does not exist")
+        except:
+            return Response("the user was not found")
 
-        obj = get_object_or_404(
-            data,
-            pk=self.kwargs['pk'],
-        )
-        return obj
+        return Response("deleted")
+
+    def put(self, request, pk, format=None):
+        user = User.objects.get(pk=pk)
+        serializer = UserSerializer(user, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
 
 
 class CustomerList(generics.ListCreateAPIView):
@@ -45,14 +66,23 @@ class CustomerList(generics.ListCreateAPIView):
     filterset_fields = ['id', 'firstName', 'lastName',
                         'email', 'company_id', 'phoneNumber']
 
-    def get_object(self):
-        data = Customer.objects.all()
+    def delete(self, request, pk=None):
+        try:
+            customer = Customer.objects.get(pk=pk)
+            customer.delete()
+        except Customer.DoesNotExist:
+            return Response("customer does not exist")
 
-        obj = get_object_or_404(
-            data,
-            pk=self.kwargs['pk'],
-        )
-        return obj
+        return Response("deleted")
+
+    def put(self, request, pk, format=None):
+        customer = Customer.objects.get(pk=pk)
+        serializer = CustomerSerializer(customer, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
 
 
 class FiscalGovList(generics.ListCreateAPIView):
@@ -62,11 +92,16 @@ class FiscalGovList(generics.ListCreateAPIView):
     filterset_fields = ['id', 'start', 'end',
                         'company_id', 'createdByUser']
 
-    def get_object(self):
-        data = FiscalGov.objects.all()
+    def delete(self, request, pk=None):
+        fiscalgov = FiscalGov.objects.get(pk=pk)
+        fiscalgov.delete()
+        return Response("deleted")
 
-        obj = get_object_or_404(
-            data,
-            pk=self.kwargs['pk'],
-        )
-        return obj
+    def put(self, request, pk, format=None):
+        fiscalgov = FiscalGov.objects.get(pk=pk)
+        serializer = FiscalGovSerializer(fiscalgov, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

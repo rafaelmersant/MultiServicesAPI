@@ -12,14 +12,19 @@ class ProductList(generics.ListCreateAPIView):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'description', 'company', 'model']
 
-    def get_object(self):
-        data = Product.objects.all()
+    def delete(self, request, pk=None):
+        product = Product.objects.get(pk=pk)
+        product.delete()
+        return Response("deleted")
 
-        obj = get_object_or_404(
-            data,
-            pk=self.kwargs['pk'],
-        )
-        return obj
+    def put(self, request, pk, format=None):
+        product = Product.objects.get(pk=pk)
+        serializer = ProductSerializer(product, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProductCategoryList(generics.ListCreateAPIView):
@@ -28,14 +33,20 @@ class ProductCategoryList(generics.ListCreateAPIView):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'description', 'company']
 
-    def get_object(self):
-        data = ProductCategory.objects.all()
+    def delete(self, request, pk=None):
+        productCategory = ProductCategory.objects.get(pk=pk)
+        productCategory.delete()
+        return Response("deleted")
 
-        obj = get_object_or_404(
-            data,
-            pk=self.kwargs['pk'],
-        )
-        return obj
+    def put(self, request, pk, format=None):
+        productCategory = ProductCategory.objects.get(pk=pk)
+        serializer = ProductCategorySerializer(
+            productCategory, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProductsStockList(generics.ListCreateAPIView):
@@ -44,14 +55,20 @@ class ProductsStockList(generics.ListCreateAPIView):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'company', 'product', 'modifiedByUser']
 
-    def get_object(self):
-        data = ProductsStock.objects.all()
+    def delete(self, request, pk=None):
+        productsStock = ProductsStock.objects.get(pk=pk)
+        productsStock.delete()
+        return Response("deleted")
 
-        obj = get_object_or_404(
-            data,
-            pk=self.kwargs['pk'],
-        )
-        return obj
+    def put(self, request, pk, format=None):
+        productsStock = ProductsStock.objects.get(pk=pk)
+        serializer = ProductsCategorySerializer(
+            productsStock, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProductsTrackingList(generics.ListCreateAPIView):
@@ -61,11 +78,17 @@ class ProductsTrackingList(generics.ListCreateAPIView):
     filterset_fields = ['id', 'company',
                         'product', 'typeTracking', 'createdByUser']
 
-    def get_object(self):
-        data = ProductsTracking.objects.all()
+    def delete(self, request, pk=None):
+        productsTracking = ProductsTracking.objects.get(pk=pk)
+        productsTracking.delete()
+        return Response("deleted")
 
-        obj = get_object_or_404(
-            data,
-            pk=self.kwargs['pk'],
-        )
-        return obj
+    def put(self, request, pk, format=None):
+        productsTracking = ProductsTracking.objects.get(pk=pk)
+        serializer = ProductsTrackingSerializer(
+            productsTracking, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
