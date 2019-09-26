@@ -4,10 +4,21 @@ from products.views import ProductList, ProductCategoryList, \
 
 urlpatterns = [
     url(r'^products/$', ProductList.as_view(), name='products'),
+    url(r'^products/(?P<pk>[0-9]+)', ProductList.as_view(),
+        name='product_byId'),
+
     url(r'^productCategories/$', ProductCategoryList.as_view(),
         name='productCategories'),
+    url(r'^productCategories/(?P<pk>[0-9]+)', ProductCategoryList.as_view(),
+        name='productCategories_byId'),
+
     url(r'^productsStocks/$', ProductsStockList.as_view(),
         name='productsStocks'),
+    url(r'^productsStocks/(?P<pk>[0-9]+)', ProductsStockList.as_view(),
+        name='productsStocks_byId'),
+
     url(r'^productsTrackings/$', ProductsTrackingList.as_view(),
-        name='productsTrackings')
+        name='productsTrackings'),
+    url(r'^productsTrackings/(?P<pk>[0-9]+)', ProductsTrackingList.as_view(),
+        name='productsTrackings_byId')
 ]

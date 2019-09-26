@@ -4,6 +4,7 @@ from products.models import Product
 
 
 class InvoicesHeader(models.Model):
+    sequence = models.CharField(max_length=20, blank=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     paymentMethod = models.CharField(max_length=20)
