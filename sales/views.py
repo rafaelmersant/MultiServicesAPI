@@ -36,6 +36,18 @@ class InvoicesHeaderList(generics.ListCreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class SequenceInvoice(generics.ListCreateAPIView):
+    serializer_class = InvoicesHeaderSerializer
+
+    def get(self, request, format=None, pk=None):
+        try:
+            sequence = InvoicesHeader.objects.filter(company__id=pk)
+            return Response({"sequence": sequence.count()+1},
+                            status=status.HTTP_200_OK)
+        except:
+            return Response("Bad request", status=status.HTTP_400_BAD_REQUEST)
+
+
 class InvoicesDetailList(generics.ListCreateAPIView):
     queryset = InvoicesDetail.objects.all()
     serializer_class = InvoicesDetailSerializer

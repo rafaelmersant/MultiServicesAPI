@@ -21,6 +21,8 @@ class User(models.Model):
     email = models.EmailField()
     password = models.CharField(max_length=150)
     fullName = models.CharField(max_length=255)
+    userHash = models.CharField(max_length=255, blank=True)
+    userRole = models.CharField(max_length=20, blank=True)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
     createdByUser = models.EmailField()
     objects = models.Manager()

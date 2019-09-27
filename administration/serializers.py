@@ -16,7 +16,8 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'company', 'company_id', 'userName', 'email',
-                  'fullName', 'creationDate', 'createdByUser')
+                  'fullName', 'creationDate', 'createdByUser',
+                  'userHash', 'userRole')
 
 
 class CustomerSerializer(serializers.HyperlinkedModelSerializer):
