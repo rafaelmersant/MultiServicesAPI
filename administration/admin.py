@@ -4,10 +4,10 @@ from .models import User, Customer, Company, FiscalGov
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ['id', 'company_id', 'userName', 'email',
-                    'fullName', 'creationDate', 'createdByUser']
-    list_editable = ('userName',)
-    search_fields = ('userName', 'email',)
+    list_display = ['id', 'company_id', 'email', 'userRole',
+                    'name', 'creationDate', 'createdByUser']
+    list_editable = ('name',)
+    search_fields = ('name', 'email',)
 
 
 @admin.register(Company)

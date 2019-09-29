@@ -17,10 +17,9 @@ class Company(models.Model):
 
 class User(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    userName = models.CharField(max_length=50)
     email = models.EmailField()
     password = models.CharField(max_length=150)
-    fullName = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
     userHash = models.CharField(max_length=255, blank=True)
     userRole = models.CharField(max_length=20, blank=True)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)

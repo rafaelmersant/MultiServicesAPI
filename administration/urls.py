@@ -1,6 +1,6 @@
 from django.conf.urls import url
 from administration.views import CompanyList, UserList, CustomerList, \
-    FiscalGovList
+    FiscalGovList, UserLogin
 
 urlpatterns = [
     url(r'^companies/$', CompanyList.as_view(), name='companies'),
@@ -10,6 +10,11 @@ urlpatterns = [
     url(r'^users/$', UserList.as_view(), name='users'),
     url(r'^users/(?P<pk>[0-9]+)', UserList.as_view(),
         name='user_byId'),
+
+    url(r'^login/(?P<email>.*)/(?P<password>.*)', UserLogin.as_view(),
+        name='UserLogin'),
+    # url(r'^login/(?P<email>[\w-]+)/(?P<password>[\w-]+)', UserLogin.as_view(),
+    #     name='UserLogin'),
 
     url(r'^customers/$', CustomerList.as_view(), name='customers'),
     url(r'^customers/(?P<pk>[0-9]+)',

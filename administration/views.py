@@ -40,7 +40,7 @@ class UserList(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'userName', 'email', 'fullName']
+    filterset_fields = ['id', 'email', 'name', 'userRole', 'userHash']
 
     def delete(self, request, pk=None):
         try:
@@ -63,6 +63,22 @@ class UserList(generics.ListCreateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserLogin(generics.ListCreateAPIView):
+    serializer_class = UserSerializer
+
+    def get(self, request, format=None, email=None, password=None):
+        try:
+            user = User.objects.filter(email=email, password=password)
+
+            return Response({"exist": user.count()},
+                            status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response("Not Found", status=status.HTTP_404_NOT_FOUND)
+        except:
+            return Response("Bad Request",
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class CustomerList(generics.ListCreateAPIView):
