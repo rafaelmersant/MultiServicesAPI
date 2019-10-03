@@ -6,8 +6,7 @@ class ProductCategory(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     description = models.CharField(max_length=50)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
-    createdByUser = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True)
+    createdUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()
 
     def __str__(self):
@@ -28,8 +27,7 @@ class Product(models.Model):
     measure = models.CharField(max_length=15, null=True, blank=True)
     model = models.CharField(max_length=50, null=True, blank=True)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
-    createdByUser = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True)
+    createdUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()
 
     def __str__(self):
@@ -43,7 +41,7 @@ class ProductsTracking(models.Model):
     quantity = models.DecimalField(
         max_digits=8, decimal_places=2, null=True, blank=True)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
-    createdByUser = models.ForeignKey(User, on_delete=models.CASCADE)
+    createdUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()
 
 
@@ -55,6 +53,5 @@ class ProductsStock(models.Model):
     quantityHold = models.DecimalField(
         max_digits=8, decimal_places=2, null=True, blank=True)
     lastUpdated = models.DateTimeField(auto_now_add=True, blank=True)
-    modifiedByUser = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True)
+    modifiedUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()

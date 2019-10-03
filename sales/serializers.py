@@ -11,12 +11,10 @@ class InvoicesHeaderSerializer(serializers.HyperlinkedModelSerializer):
     customer = CustomerSerializer(many=False, read_only=True)
     customer_id = serializers.IntegerField(write_only=True)
 
-    createdByUser = serializers.StringRelatedField(read_only=True)
-
     class Meta:
         model = InvoicesHeader
         fields = ('id', 'company', 'company_id', 'customer', 'customer_id',
-                  'paymentMethod',  'ncf', 'creationDate', 'createdByUser',
+                  'paymentMethod',  'ncf', 'creationDate', 'createdUser',
                   'sequence')
 
 

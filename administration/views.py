@@ -5,13 +5,14 @@ from rest_framework.response import Response
 from .models import Company, User, Customer, FiscalGov
 from .serializers import CompanySerializer, UserSerializer, \
     CustomerSerializer, FiscalGovSerializer
+import json
 
 
 class CompanyList(generics.ListCreateAPIView):
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'name', 'rnc']
+    filterset_fields = ['id', 'name', 'rnc', 'creationDate']
 
     def delete(self, request, pk=None):
         try:
@@ -40,7 +41,8 @@ class UserList(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'email', 'name', 'userRole', 'userHash']
+    filterset_fields = ['id', 'email', 'name',
+                        'userRole', 'userHash', 'creationDate']
 
     def delete(self, request, pk=None):
         try:
@@ -68,12 +70,25 @@ class UserList(generics.ListCreateAPIView):
 class UserLogin(generics.ListCreateAPIView):
     serializer_class = UserSerializer
 
-    def get(self, request, format=None, email=None, password=None):
+    def post(self, request):
         try:
+            body_unicode = request.body.decode('utf-8')
+            body = json.loads(body_unicode)
+            email = body['email']
+            password = body['password']
+
             user = User.objects.filter(email=email, password=password)
 
-            return Response({"exist": user.count()},
-                            status=status.HTTP_200_OK)
+            if user.count() > 0:
+                return Response({"id": user[0].id,
+                                 "email": user[0].email,
+                                 "name": user[0].name,
+                                 "role": user[0].userRole,
+                                 "companyId": user[0].company.id},
+                                status=status.HTTP_200_OK)
+
+            return Response("null", status=status.HTTP_404_NOT_FOUND)
+
         except User.DoesNotExist:
             return Response("Not Found", status=status.HTTP_404_NOT_FOUND)
         except:
@@ -86,7 +101,7 @@ class CustomerList(generics.ListCreateAPIView):
     serializer_class = CustomerSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'firstName', 'lastName',
-                        'email', 'company_id', 'phoneNumber']
+                        'email', 'company_id', 'phoneNumber', 'creationDate']
 
     def delete(self, request, pk=None):
         try:
@@ -116,7 +131,7 @@ class FiscalGovList(generics.ListCreateAPIView):
     serializer_class = FiscalGovSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'start', 'end',
-                        'company_id', 'createdByUser']
+                        'company_id', 'createdUser', 'creationDate']
 
     def delete(self, request, pk=None):
         fiscalgov = FiscalGov.objects.get(pk=pk)

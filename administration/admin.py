@@ -5,7 +5,7 @@ from .models import User, Customer, Company, FiscalGov
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ['id', 'company_id', 'email', 'userRole',
-                    'name', 'creationDate', 'createdByUser']
+                    'name', 'creationDate', 'createdUser']
     list_editable = ('name',)
     search_fields = ('name', 'email',)
 

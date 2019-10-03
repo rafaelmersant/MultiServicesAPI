@@ -11,7 +11,7 @@ class InvoicesHeaderList(generics.ListCreateAPIView):
     serializer_class = InvoicesHeaderSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'company', 'company_id', 'customer', 'sequence',
-                        'customer_id', 'paymentMethod', 'ncf', 'createdByUser']
+                        'customer_id', 'paymentMethod', 'ncf', 'createdUser']
 
     def delete(self, request, pk=None):
         try:

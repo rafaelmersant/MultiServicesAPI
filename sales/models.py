@@ -9,8 +9,7 @@ class InvoicesHeader(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     paymentMethod = models.CharField(max_length=20)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
-    createdByUser = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True)
+    createdUser = models.EmailField(null=True, blank=True)
     ncf = models.CharField(max_length=13, null=True, blank=True)
     objects = models.Manager()
 

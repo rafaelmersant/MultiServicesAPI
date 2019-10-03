@@ -3,12 +3,12 @@ from django.db import models
 
 class Company(models.Model):
     name = models.CharField(max_length=100)
-    email = models.EmailField(null=True)
+    email = models.EmailField(null=True, blank=True)
     phoneNumber = models.CharField(max_length=50, null=True, blank=True)
     rnc = models.CharField(max_length=20, null=True, blank=True)
     address = models.CharField(max_length=255, null=True, blank=True)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
-    createdByUser = models.EmailField(null=True)
+    createdUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()
 
     def __str__(self):
@@ -23,7 +23,7 @@ class User(models.Model):
     userHash = models.CharField(max_length=255, blank=True)
     userRole = models.CharField(max_length=20, blank=True)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
-    createdByUser = models.EmailField()
+    createdUser = models.EmailField()
     objects = models.Manager()
 
     def __str__(self):
@@ -34,12 +34,12 @@ class Customer(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     firstName = models.CharField(max_length=100)
     lastName = models.CharField(max_length=100)
-    email = models.EmailField()
+    email = models.EmailField(blank=True)
     address = models.CharField(max_length=200, null=True, blank=True)
     phoneNumber = models.CharField(max_length=50, null=True, blank=True)
-    creationDate = models.DateTimeField(auto_now_add=True, blank=True)
-    createdByUser = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True)
+    creationDate = models.DateTimeField(
+        auto_now_add=True, blank=True, null=True)
+    createdUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()
 
     def __str__(self):
@@ -55,6 +55,5 @@ class FiscalGov(models.Model):
     dueDate = models.DateField()
     active = models.BooleanField()
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
-    createdByUser = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True)
+    createdUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()

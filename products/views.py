@@ -1,4 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -10,8 +11,9 @@ from .serializers import ProductSerializer, ProductCategorySerializer, \
 class ProductList(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'description', 'company', 'model']
+    search_fields = ['description']
 
     def delete(self, request, pk=None):
         try:
@@ -61,7 +63,7 @@ class ProductsStockList(generics.ListCreateAPIView):
     queryset = ProductsStock.objects.all()
     serializer_class = ProductsStockSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'company', 'product', 'modifiedByUser']
+    filterset_fields = ['id', 'company', 'product', 'modifiedUser']
 
     def delete(self, request, pk=None):
         productsStock = ProductsStock.objects.get(pk=pk)
@@ -82,9 +84,9 @@ class ProductsStockList(generics.ListCreateAPIView):
 class ProductsTrackingList(generics.ListCreateAPIView):
     queryset = ProductsTracking.objects.all()
     serializer_class = ProductsTrackingSerializer
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'company',
-                        'product', 'typeTracking', 'createdByUser']
+                        'product', 'typeTracking', 'createdUser']
 
     def delete(self, request, pk=None):
         productsTracking = ProductsTracking.objects.get(pk=pk)

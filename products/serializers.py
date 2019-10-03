@@ -10,7 +10,7 @@ class ProductCategorySerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = ProductCategory
-        fields = ('id', 'description', 'company', 'company_id')
+        fields = ('id', 'description', 'company', 'company_id', 'creationDate')
 
 
 class ProductSerializer(serializers.HyperlinkedModelSerializer):
@@ -20,14 +20,12 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
     category = ProductCategorySerializer(many=False, read_only=True)
     category_id = serializers.IntegerField(write_only=True)
 
-    createdByUser = serializers.StringRelatedField(read_only=True)
-
     class Meta:
         model = Product
         fields = ('id', 'company', 'company_id',
                   'description', 'descriptionLong', 'price',
                   'cost', 'itbis', 'category', 'category_id',
-                  'measure', 'model', 'creationDate', 'createdByUser')
+                  'measure', 'model', 'creationDate', 'createdUser')
 
 
 class ProductsStockSerializer(serializers.HyperlinkedModelSerializer):
@@ -37,13 +35,11 @@ class ProductsStockSerializer(serializers.HyperlinkedModelSerializer):
     product = ProductSerializer(many=False, read_only=True)
     product_id = serializers.IntegerField(write_only=True)
 
-    modifiedByUser = serializers.StringRelatedField(read_only=True)
-
     class Meta:
         model = ProductsStock
         fields = ('id', 'company', 'company_id', 'product',
                   'product_id', 'quantityAvailable',
-                  'quantityHold', 'lastUpdated', 'modifiedByUser')
+                  'quantityHold', 'lastUpdated', 'modifiedUser')
 
 
 class ProductsTrackingSerializer(serializers.HyperlinkedModelSerializer):
@@ -53,10 +49,8 @@ class ProductsTrackingSerializer(serializers.HyperlinkedModelSerializer):
     product = ProductSerializer(many=False, read_only=True)
     product_id = serializers.IntegerField(write_only=True)
 
-    createdByUser = serializers.StringRelatedField(read_only=True)
-
     class Meta:
         model = ProductsTracking
         fields = ('id', 'company', 'company_id', 'product',
                   'product_id', 'typeTracking',
-                  'quantity', 'creationDate', 'createdByUser')
+                  'quantity', 'creationDate', 'createdUser')
