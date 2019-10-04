@@ -38,6 +38,8 @@ class ProductsTracking(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     typeTracking = models.CharField(max_length=3)
+    # INVE=INVENTORY, INVO=INVOICE
+    concept = models.CharField(max_length=4, default='INVE')
     quantity = models.DecimalField(
         max_digits=8, decimal_places=2, null=True, blank=True)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)

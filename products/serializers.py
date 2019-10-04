@@ -52,5 +52,5 @@ class ProductsTrackingSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = ProductsTracking
         fields = ('id', 'company', 'company_id', 'product',
-                  'product_id', 'typeTracking',
+                  'product_id', 'typeTracking', 'concept',
                   'quantity', 'creationDate', 'createdUser')

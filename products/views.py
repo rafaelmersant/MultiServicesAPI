@@ -72,7 +72,7 @@ class ProductsStockList(generics.ListCreateAPIView):
 
     def put(self, request, pk, format=None):
         productsStock = ProductsStock.objects.get(pk=pk)
-        serializer = ProductsCategorySerializer(
+        serializer = ProductsStockSerializer(
             productsStock, data=request.data)
 
         if serializer.is_valid():
