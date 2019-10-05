@@ -1,4 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -99,9 +100,10 @@ class UserLogin(generics.ListCreateAPIView):
 class CustomerList(generics.ListCreateAPIView):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'firstName', 'lastName',
                         'email', 'company_id', 'phoneNumber', 'creationDate']
+    search_fields = ['firstName', 'lastName', 'phoneNumber']
 
     def delete(self, request, pk=None):
         try:

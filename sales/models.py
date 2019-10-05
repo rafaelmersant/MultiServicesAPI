@@ -11,6 +11,8 @@ class InvoicesHeader(models.Model):
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
     createdUser = models.EmailField(null=True, blank=True)
     ncf = models.CharField(max_length=13, null=True, blank=True)
+    paid = models.BooleanField(default=True)
+    reference = models.CharField(max_length=50, blank=True)
     objects = models.Manager()
 
 
