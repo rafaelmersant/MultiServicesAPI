@@ -15,7 +15,7 @@ class InvoicesHeaderSerializer(serializers.HyperlinkedModelSerializer):
         model = InvoicesHeader
         fields = ('id', 'company', 'company_id', 'customer', 'customer_id',
                   'paymentMethod',  'ncf', 'creationDate', 'createdUser',
-                  'sequence', 'paid')
+                  'sequence', 'paid', 'subtotal', 'itbis', 'discount')
 
 
 class InvoicesDetailSerializer(serializers.HyperlinkedModelSerializer):
@@ -28,4 +28,4 @@ class InvoicesDetailSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = InvoicesDetail
         fields = ('id', 'invoice', 'invoice_id', 'product', 'product_id',
-                  'price', 'cost', 'discount', 'creationDate')
+                  'quantity', 'price', 'cost', 'discount', 'creationDate')

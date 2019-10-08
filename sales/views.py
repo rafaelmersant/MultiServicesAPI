@@ -1,5 +1,6 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from django.db.models import Max
 from rest_framework import generics, status
 from rest_framework.response import Response
 from .models import InvoicesHeader, InvoicesDetail
@@ -41,8 +42,15 @@ class SequenceInvoice(generics.ListCreateAPIView):
 
     def get(self, request, format=None, pk=None):
         try:
-            sequence = InvoicesHeader.objects.filter(company__id=pk)
-            return Response({"sequence": sequence.count()+1},
+            # sequence = InvoicesHeader.objects.filter(company__id=pk)
+            sequence = InvoicesHeader.objects.filter(
+                company__id=pk).aggregate(Max('sequence'))
+
+            nextSequence = \
+                int(sequence["sequence__max"]
+                    ) if sequence["sequence__max"] else 0
+
+            return Response({"sequence": nextSequence},
                             status=status.HTTP_200_OK)
         except:
             return Response("Bad request", status=status.HTTP_400_BAD_REQUEST)

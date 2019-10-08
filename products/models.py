@@ -18,11 +18,11 @@ class Product(models.Model):
     description = models.CharField(max_length=100)
     descriptionLong = models.CharField(max_length=255, null=True, blank=True)
     price = models.DecimalField(
-        max_digits=8, decimal_places=2, null=True, blank=True)
+        max_digits=18, decimal_places=2, null=True, blank=True)
     cost = models.DecimalField(
-        max_digits=8, decimal_places=2, null=True, blank=True)
+        max_digits=18, decimal_places=2, null=True, blank=True)
     itbis = models.DecimalField(
-        max_digits=8, decimal_places=2, null=True, blank=True)
+        max_digits=18, decimal_places=2, null=True, blank=True)
     category = models.ForeignKey(ProductCategory, on_delete=models.CASCADE)
     measure = models.CharField(max_length=15, null=True, blank=True)
     model = models.CharField(max_length=50, null=True, blank=True)
@@ -41,7 +41,7 @@ class ProductsTracking(models.Model):
     # INVE=INVENTORY, INVO=INVOICE
     concept = models.CharField(max_length=4, default='INVE')
     quantity = models.DecimalField(
-        max_digits=8, decimal_places=2, null=True, blank=True)
+        max_digits=18, decimal_places=2, null=True, blank=True)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
     createdUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()
@@ -51,9 +51,9 @@ class ProductsStock(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     quantityAvailable = models.DecimalField(
-        max_digits=8, decimal_places=2, null=True, blank=True)
+        max_digits=18, decimal_places=2, null=True, blank=True)
     quantityHold = models.DecimalField(
-        max_digits=8, decimal_places=2, null=True, blank=True)
+        max_digits=18, decimal_places=2, null=True, blank=True)
     lastUpdated = models.DateTimeField(auto_now_add=True, blank=True)
     modifiedUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()

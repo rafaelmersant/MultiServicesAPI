@@ -85,7 +85,7 @@ class ProductsTrackingList(generics.ListCreateAPIView):
     queryset = ProductsTracking.objects.all()
     serializer_class = ProductsTrackingSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['id', 'company',
+    filterset_fields = ['id', 'company', 'concept',
                         'product', 'typeTracking', 'createdUser']
 
     def delete(self, request, pk=None):
