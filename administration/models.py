@@ -54,7 +54,7 @@ class FiscalGov(models.Model):
     current = models.IntegerField(null=True, blank=True)
     dueDate = models.DateTimeField(blank=True)
     active = models.BooleanField()
-    usedInInvoice = models.IntegerField(null=True)
+    usedInInvoice = models.IntegerField(default=0)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
     createdUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()

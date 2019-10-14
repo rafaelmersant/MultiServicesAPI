@@ -39,5 +39,5 @@ class FiscalGovSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = FiscalGov
         fields = ('id', 'company', 'company_id', 'typeDoc', 'start',
-                  'end', 'current', 'dueDate', 'active',
+                  'end', 'current', 'dueDate', 'active', 'usedInInvoice',
                   'creationDate', 'createdUser')
