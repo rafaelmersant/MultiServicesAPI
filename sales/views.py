@@ -50,7 +50,7 @@ class SequenceInvoice(generics.ListCreateAPIView):
                 int(sequence["sequence__max"]
                     ) if sequence["sequence__max"] else 0
 
-            return Response({"sequence": nextSequence},
+            return Response({"sequence": nextSequence + 1},
                             status=status.HTTP_200_OK)
         except:
             return Response("Bad request", status=status.HTTP_400_BAD_REQUEST)

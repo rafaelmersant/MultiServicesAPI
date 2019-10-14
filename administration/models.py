@@ -48,12 +48,13 @@ class Customer(models.Model):
 
 class FiscalGov(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    typeDoc = models.CharField(max_length=15)
+    typeDoc = models.CharField(max_length=4)  # BC01
     start = models.IntegerField()
     end = models.IntegerField()
     current = models.IntegerField(null=True, blank=True)
-    dueDate = models.DateField()
+    dueDate = models.DateTimeField(blank=True)
     active = models.BooleanField()
+    usedInInvoice = models.IntegerField(null=True)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
     createdUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()
