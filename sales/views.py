@@ -44,13 +44,11 @@ class SequenceInvoice(generics.ListCreateAPIView):
         try:
             # sequence = InvoicesHeader.objects.filter(company__id=pk)
             sequence = InvoicesHeader.objects.filter(
-                company__id=pk).aggregate(Max('sequence'))
+                company__id=pk).count()  # aggregate(Max('sequence'))
 
-            nextSequence = \
-                int(sequence["sequence__max"]
-                    ) if sequence["sequence__max"] else 0
-
-            return Response({"sequence": nextSequence + 1},
+            # nextSequence = int(sequence["sequence__max"])
+            #   ) if sequence["sequence__max"] else 0
+            return Response({"sequence": sequence + 1},
                             status=status.HTTP_200_OK)
         except:
             return Response("Bad request", status=status.HTTP_400_BAD_REQUEST)
