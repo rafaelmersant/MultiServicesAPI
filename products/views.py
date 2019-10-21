@@ -40,7 +40,7 @@ class ProductList(generics.ListCreateAPIView):
 class ProductCategoryList(generics.ListCreateAPIView):
     queryset = ProductCategory.objects.all()
     serializer_class = ProductCategorySerializer
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'description', 'company']
 
     def delete(self, request, pk=None):
