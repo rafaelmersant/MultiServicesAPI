@@ -37,3 +37,11 @@ class InvoicesDetail(models.Model):
         max_digits=18, decimal_places=2, default=0)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
     objects = models.Manager()
+
+
+class InvoicesSequence(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    sequence = models.IntegerField()
+    creationDate = models.DateTimeField(auto_now_add=True, blank=True)
+    createdUser = models.EmailField(null=True, blank=True)
+    objects = models.Manager()

@@ -1,6 +1,6 @@
 from django.conf.urls import url
 from sales.views import InvoicesHeaderList, InvoicesDetailList, \
-    SequenceInvoice
+    InvoicesSequenceList
 
 urlpatterns = [
     url(r'^invoicesHeaders/$', InvoicesHeaderList.as_view(),
@@ -13,7 +13,9 @@ urlpatterns = [
     url(r'^invoicesDetails/(?P<pk>[0-9]+)', InvoicesDetailList.as_view(),
         name='invoicesDetail_byId'),
 
-    url(r'^sequenceInvoice/(?P<pk>[0-9]+)', SequenceInvoice.as_view(),
-        name='sequenceInvoice_byCompany'),
+    url(r'^invoicesSequences/$', InvoicesSequenceList.as_view(),
+        name='invoicesSequence'),
+    url(r'^invoicesSequences/(?P<pk>[0-9]+)', InvoicesSequenceList.as_view(),
+        name='invoicesSequence_byId'),
 
 ]

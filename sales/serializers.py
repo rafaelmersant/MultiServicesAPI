@@ -1,4 +1,4 @@
-from .models import InvoicesHeader, InvoicesDetail
+from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence
 from products.serializers import CompanySerializer, ProductSerializer
 from administration.serializers import CustomerSerializer
 from rest_framework import serializers
@@ -31,3 +31,13 @@ class InvoicesDetailSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'invoice', 'invoice_id', 'product', 'product_id',
                   'quantity', 'price', 'itbis', 'cost', 'discount',
                   'creationDate')
+
+
+class InvoicesSequenceSerializer(serializers.HyperlinkedModelSerializer):
+    company = CompanySerializer(many=False, read_only=True)
+    company_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = InvoicesSequence
+        fields = ('id', 'company', 'company_id', 'sequence',
+                  'creationDate', 'createdUser')
