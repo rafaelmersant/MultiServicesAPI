@@ -26,6 +26,7 @@ class Product(models.Model):
     category = models.ForeignKey(ProductCategory, on_delete=models.CASCADE)
     measure = models.CharField(max_length=15, null=True, blank=True)
     model = models.CharField(max_length=50, null=True, blank=True)
+    barcode = models.CharField(max_length=20, null=True, blank=True)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
     createdUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()
@@ -42,6 +43,11 @@ class ProductsTracking(models.Model):
     concept = models.CharField(max_length=4, default='INVE')
     quantity = models.DecimalField(
         max_digits=18, decimal_places=2, null=True, blank=True)
+    price = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True)
+    cost = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True)
+    provider = models.CharField(max_length=50, null=True, blank=True)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
     createdUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()

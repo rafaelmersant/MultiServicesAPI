@@ -24,7 +24,7 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
         model = Product
         fields = ('id', 'company', 'company_id',
                   'description', 'descriptionLong', 'price',
-                  'cost', 'itbis', 'category', 'category_id',
+                  'cost', 'itbis', 'category', 'category_id', 'barcode',
                   'measure', 'model', 'creationDate', 'createdUser')
 
 
@@ -38,8 +38,8 @@ class ProductsStockSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = ProductsStock
         fields = ('id', 'company', 'company_id', 'product',
-                  'product_id', 'quantityAvailable',
-                  'quantityHold', 'lastUpdated', 'modifiedUser')
+                  'product_id', 'quantityAvailable', 'price', 'cost',
+                  'provider', 'quantityHold', 'lastUpdated', 'modifiedUser')
 
 
 class ProductsTrackingSerializer(serializers.HyperlinkedModelSerializer):
