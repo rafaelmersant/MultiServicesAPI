@@ -132,7 +132,7 @@ class FiscalGovList(generics.ListCreateAPIView):
     queryset = FiscalGov.objects.all()
     serializer_class = FiscalGovSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'start', 'end', 'active',
+    filterset_fields = ['id', 'start', 'end', 'active', 'typeDoc',
                         'company_id', 'createdUser', 'creationDate']
 
     def delete(self, request, pk=None):
