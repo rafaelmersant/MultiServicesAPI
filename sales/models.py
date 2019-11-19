@@ -4,7 +4,7 @@ from products.models import Product
 
 
 class InvoicesHeader(models.Model):
-    sequence = models.CharField(max_length=20, blank=True)
+    sequence = models.IntegerField()
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     paymentMethod = models.CharField(max_length=20)
@@ -17,8 +17,9 @@ class InvoicesHeader(models.Model):
         max_digits=18, decimal_places=2, default=0)
     itbis = models.DecimalField(
         max_digits=18, decimal_places=2, default=0)
-    creationDate = models.DateTimeField(auto_now_add=True, blank=True)
+    creationDate = models.DateTimeField()
     createdUser = models.EmailField(null=True, blank=True)
+    serverDate = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     objects = models.Manager()
 
 
