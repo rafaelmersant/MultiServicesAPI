@@ -3,9 +3,9 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.response import Response
-from .models import Company, User, Customer, FiscalGov
+from .models import Company, User, Customer, FiscalGov, Provider
 from .serializers import CompanySerializer, UserSerializer, \
-    CustomerSerializer, FiscalGovSerializer
+    CustomerSerializer, FiscalGovSerializer, ProviderSerializer
 import json
 
 
@@ -121,6 +121,38 @@ class CustomerList(generics.ListCreateAPIView):
     def put(self, request, pk, format=None):
         customer = Customer.objects.get(pk=pk)
         serializer = CustomerSerializer(customer, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProviderList(generics.ListCreateAPIView):
+    queryset = Provider.objects.all()
+    serializer_class = ProviderSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['id', 'firstName', 'lastName',
+                        'email', 'rnc', 'company_id',
+                        'phoneNumber', 'creationDate']
+    search_fields = ['firstName', 'lastName', 'phoneNumber', 'rnc']
+
+    def delete(self, request, pk=None):
+        try:
+            provider = Provider.objects.get(pk=pk)
+            provider.delete()
+        except Provider.DoesNotExist:
+            return Response("provider does not exist",
+                            status=status.HTTP_404_NOT_FOUND)
+        except:
+            return Response("Internal Server Error",
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response("deleted", status=status.HTTP_200_OK)
+
+    def put(self, request, pk, format=None):
+        provider = Provider.objects.get(pk=pk)
+        serializer = ProviderSerializer(provider, data=request.data)
 
         if serializer.is_valid():
             serializer.save()

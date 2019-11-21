@@ -46,6 +46,23 @@ class Customer(models.Model):
         return f'{self.id}'
 
 
+class Provider(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    firstName = models.CharField(max_length=100)
+    lastName = models.CharField(max_length=100)
+    email = models.EmailField(blank=True)
+    address = models.CharField(max_length=200, null=True, blank=True)
+    phoneNumber = models.CharField(max_length=50, null=True, blank=True)
+    rnc = models.CharField(max_length=13, blank=True)
+    creationDate = models.DateTimeField(
+        auto_now_add=True, blank=True, null=True)
+    createdUser = models.EmailField(null=True, blank=True)
+    objects = models.Manager()
+
+    def __str__(self):
+        return f'{self.id}'
+
+
 class FiscalGov(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     typeDoc = models.CharField(max_length=4)  # BC01

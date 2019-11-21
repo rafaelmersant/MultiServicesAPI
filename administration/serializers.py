@@ -1,4 +1,4 @@
-from .models import Company, User, Customer, FiscalGov
+from .models import Company, User, Customer, FiscalGov, Provider
 from rest_framework import serializers
 
 
@@ -30,6 +30,17 @@ class CustomerSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'company', 'company_id', 'firstName',
                   'lastName', 'email', 'phoneNumber', 'address',
                   'creationDate', 'createdUser')
+
+
+class ProviderSerializer(serializers.HyperlinkedModelSerializer):
+    company = CompanySerializer(many=False, read_only=True)
+    company_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = Provider
+        fields = ('id', 'company', 'company_id', 'firstName',
+                  'lastName', 'email', 'phoneNumber', 'address',
+                  'rnc', 'creationDate', 'createdUser')
 
 
 class FiscalGovSerializer(serializers.HyperlinkedModelSerializer):

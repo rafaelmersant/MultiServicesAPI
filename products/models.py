@@ -1,5 +1,5 @@
 from django.db import models
-from administration.models import Company, User
+from administration.models import Company, User, Provider
 
 
 class ProductCategory(models.Model):
@@ -35,6 +35,20 @@ class Product(models.Model):
         return self.description
 
 
+class ProductsTrackingHeader(models.Model):
+    provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
+    docDate = models.DateTimeField(blank=True)
+    ncf = models.CharField(max_length=13, null=True, blank=True)
+    totalAmount = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True)
+    itbis = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True)
+    creationDate = models.DateTimeField(blank=True)
+    serverDate = models.DateTimeField(auto_now_add=True, blank=True)
+    createdUser = models.EmailField(null=True, blank=True)
+    objects = models.Manager()
+
+
 class ProductsTracking(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
@@ -47,7 +61,8 @@ class ProductsTracking(models.Model):
         max_digits=18, decimal_places=2, null=True, blank=True)
     cost = models.DecimalField(
         max_digits=18, decimal_places=2, null=True, blank=True)
-    provider = models.CharField(max_length=50, null=True, blank=True)
+    itbis = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
     createdUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()
