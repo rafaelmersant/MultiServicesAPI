@@ -147,7 +147,7 @@ REST_FRAMEWORK = {
 }
 
 REST_FRAMEWORK = {
-
+    'COERCE_DECIMAL_TO_STRING': False
 }
 
 # Internationalization

@@ -3,9 +3,11 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.response import Response
-from .models import Product, ProductCategory, ProductsStock, ProductsTracking
+from .models import Product, ProductCategory, ProductsStock, \
+    ProductsTracking, ProductsTrackingHeader
 from .serializers import ProductSerializer, ProductCategorySerializer, \
-    ProductsStockSerializer, ProductsTrackingSerializer
+    ProductsStockSerializer, ProductsTrackingSerializer, \
+    ProductsTrackingHeaderSerializer
 
 
 class ProductList(generics.ListCreateAPIView):
@@ -82,11 +84,34 @@ class ProductsStockList(generics.ListCreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ProductsTrackingHeaderList(generics.ListCreateAPIView):
+    queryset = ProductsTrackingHeader.objects.all()
+    serializer_class = ProductsTrackingHeaderSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['id', 'company', 'provider',
+                        'ncf', 'docDate', 'createdUser']
+
+    def delete(self, request, pk=None):
+        productsTrackingHeader = ProductsTrackingHeader.objects.get(pk=pk)
+        productsTrackingHeader.delete()
+        return Response("deleted", status=status.HTTP_200_OK)
+
+    def put(self, request, pk, format=None):
+        productsTrackingHeader = ProductsTrackingHeader.objects.get(pk=pk)
+        serializer = ProductsTrackingHeaderSerializer(
+            productsTrackingHeader, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class ProductsTrackingList(generics.ListCreateAPIView):
     queryset = ProductsTracking.objects.all()
     serializer_class = ProductsTrackingSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['id', 'company', 'concept',
+    filterset_fields = ['id', 'company', 'concept', 'header',
                         'product', 'typeTracking', 'createdUser']
 
     def delete(self, request, pk=None):

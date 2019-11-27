@@ -40,7 +40,7 @@ class ProviderSerializer(serializers.HyperlinkedModelSerializer):
         model = Provider
         fields = ('id', 'company', 'company_id', 'firstName',
                   'lastName', 'email', 'phoneNumber', 'address',
-                  'rnc', 'creationDate', 'createdUser')
+                  'rnc', 'creationDate', 'createdUser', 'name')
 
 
 class FiscalGovSerializer(serializers.HyperlinkedModelSerializer):

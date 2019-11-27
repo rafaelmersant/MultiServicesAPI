@@ -1,6 +1,7 @@
-from .models import Product, ProductCategory, ProductsStock, ProductsTracking
+from .models import Product, ProductCategory, ProductsStock, \
+    ProductsTracking, ProductsTrackingHeader
 from administration.models import Company
-from administration.serializers import CompanySerializer
+from administration.serializers import CompanySerializer, ProviderSerializer
 from rest_framework import serializers
 
 
@@ -42,6 +43,21 @@ class ProductsStockSerializer(serializers.HyperlinkedModelSerializer):
                   'quantityHold', 'lastUpdated', 'modifiedUser')
 
 
+class ProductsTrackingHeaderSerializer(serializers.HyperlinkedModelSerializer):
+    company = CompanySerializer(many=False, read_only=True)
+    company_id = serializers.IntegerField(write_only=True)
+
+    provider = ProviderSerializer(many=False, read_only=True)
+    provider_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = ProductsTrackingHeader
+        fields = ('id', 'company', 'company_id', 'provider',
+                  'provider_id', 'docDate', 'totalAmount',
+                  'itbis', 'ncf', 'serverDate',
+                  'creationDate', 'createdUser')
+
+
 class ProductsTrackingSerializer(serializers.HyperlinkedModelSerializer):
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField(write_only=True)
@@ -49,9 +65,12 @@ class ProductsTrackingSerializer(serializers.HyperlinkedModelSerializer):
     product = ProductSerializer(many=False, read_only=True)
     product_id = serializers.IntegerField(write_only=True)
 
+    header = ProductsTrackingHeaderSerializer(many=False, read_only=True)
+    header_id = serializers.IntegerField(write_only=True)
+
     class Meta:
         model = ProductsTracking
         fields = ('id', 'company', 'company_id', 'product',
                   'product_id', 'typeTracking', 'concept',
-                  'quantity', 'price', 'cost', 'provider',
-                  'creationDate', 'createdUser')
+                  'quantity', 'price', 'cost', 'header',
+                  'header_id', 'creationDate', 'createdUser')

@@ -59,6 +59,9 @@ class Provider(models.Model):
     createdUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()
 
+    def name(self):
+        return self.firstName + ' ' + self.lastName
+
     def __str__(self):
         return f'{self.id}'
 

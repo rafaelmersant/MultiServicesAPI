@@ -36,11 +36,12 @@ class Product(models.Model):
 
 
 class ProductsTrackingHeader(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True)
     provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
     docDate = models.DateTimeField(blank=True)
     ncf = models.CharField(max_length=13, null=True, blank=True)
     totalAmount = models.DecimalField(
-        max_digits=18, decimal_places=2, null=True, blank=True)
+        max_digits=18, decimal_places=2, null=True)
     itbis = models.DecimalField(
         max_digits=18, decimal_places=2, null=True, blank=True)
     creationDate = models.DateTimeField(blank=True)
@@ -50,6 +51,9 @@ class ProductsTrackingHeader(models.Model):
 
 
 class ProductsTracking(models.Model):
+    header = models.ForeignKey(
+        ProductsTrackingHeader, on_delete=models.CASCADE,
+        null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     typeTracking = models.CharField(max_length=3)
