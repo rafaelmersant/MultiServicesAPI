@@ -52,7 +52,7 @@ class ProductsTrackingHeader(models.Model):
 
 class ProductsTracking(models.Model):
     header = models.ForeignKey(
-        ProductsTrackingHeader, on_delete=models.CASCADE,
+        ProductsTrackingHeader, on_delete=models.SET_NULL,
         null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
