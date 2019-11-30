@@ -37,6 +37,8 @@ class Customer(models.Model):
     email = models.EmailField(blank=True)
     address = models.CharField(max_length=200, null=True, blank=True)
     phoneNumber = models.CharField(max_length=50, null=True, blank=True)
+    identification = models.CharField(max_length=20, blank=True)
+    identificationType = models.CharField(max_length=1, blank=True)
     creationDate = models.DateTimeField(
         auto_now_add=True, blank=True, null=True)
     createdUser = models.EmailField(null=True, blank=True)

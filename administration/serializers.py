@@ -29,6 +29,7 @@ class CustomerSerializer(serializers.HyperlinkedModelSerializer):
         model = Customer
         fields = ('id', 'company', 'company_id', 'firstName',
                   'lastName', 'email', 'phoneNumber', 'address',
+                  'identification', 'identificationType',
                   'creationDate', 'createdUser')
 
 
