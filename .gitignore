@@ -1,0 +1,7 @@
+*~
+*.pyc
+local_conf.py
+ll_theme
+.build
+db.sqlite3
+
