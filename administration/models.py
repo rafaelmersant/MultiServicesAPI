@@ -51,7 +51,7 @@ class Customer(models.Model):
 class Provider(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     firstName = models.CharField(max_length=100)
-    lastName = models.CharField(max_length=100)
+    lastName = models.CharField(max_length=100, null=True, blank=True)
     email = models.EmailField(blank=True)
     address = models.CharField(max_length=200, null=True, blank=True)
     phoneNumber = models.CharField(max_length=50, null=True, blank=True)

@@ -12,11 +12,11 @@ class InvoicesHeader(models.Model):
     paid = models.BooleanField(default=True)
     reference = models.CharField(max_length=50, blank=True)
     subtotal = models.DecimalField(
-        max_digits=18, decimal_places=2, default=0)
+        max_digits=18, decimal_places=6, default=0)
     discount = models.DecimalField(
-        max_digits=18, decimal_places=2, default=0)
+        max_digits=18, decimal_places=6, default=0)
     itbis = models.DecimalField(
-        max_digits=18, decimal_places=2, default=0)
+        max_digits=18, decimal_places=6, default=0)
     creationDate = models.DateTimeField()
     createdUser = models.EmailField(null=True, blank=True)
     serverDate = models.DateTimeField(auto_now_add=True, blank=True, null=True)
@@ -27,15 +27,15 @@ class InvoicesDetail(models.Model):
     invoice = models.ForeignKey(InvoicesHeader, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.DecimalField(
-        max_digits=18, decimal_places=2, default=0)
+        max_digits=18, decimal_places=6, default=0)
     price = models.DecimalField(
-        max_digits=18, decimal_places=2, default=0)
+        max_digits=18, decimal_places=6, default=0)
     cost = models.DecimalField(
-        max_digits=18, decimal_places=2, default=0)
+        max_digits=18, decimal_places=6, default=0)
     itbis = models.DecimalField(
-        max_digits=18, decimal_places=2, default=0)
+        max_digits=18, decimal_places=6, default=0)
     discount = models.DecimalField(
-        max_digits=18, decimal_places=2, default=0)
+        max_digits=18, decimal_places=6, default=0)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
     objects = models.Manager()
 
