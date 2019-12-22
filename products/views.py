@@ -3,6 +3,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from .models import Product, ProductCategory, ProductsStock, \
     ProductsTracking, ProductsTrackingHeader
 from .serializers import ProductSerializer, ProductCategorySerializer, \
@@ -10,9 +11,16 @@ from .serializers import ProductSerializer, ProductCategorySerializer, \
     ProductsTrackingHeaderSerializer
 
 
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+
+
 class ProductList(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'description',
                         'company', 'model', 'category_id', 'barcode']
