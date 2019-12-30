@@ -12,7 +12,7 @@ from .serializers import ProductSerializer, ProductCategorySerializer, \
 
 
 class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 100
+    page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 1000
 
@@ -97,7 +97,7 @@ class ProductsTrackingHeaderList(generics.ListCreateAPIView):
     serializer_class = ProductsTrackingHeaderSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'company', 'provider',
-                        'ncf', 'docDate', 'createdUser']
+                        'ncf', 'docDate', 'createdUser', 'paid', 'reference']
 
     def delete(self, request, pk=None):
         productsTrackingHeader = ProductsTrackingHeader.objects.get(pk=pk)

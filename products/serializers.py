@@ -55,7 +55,8 @@ class ProductsTrackingHeaderSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'company', 'company_id', 'provider',
                   'provider_id', 'docDate', 'totalAmount',
                   'itbis', 'ncf', 'serverDate',
-                  'creationDate', 'createdUser')
+                  'creationDate', 'createdUser',
+                  'reference', 'paid')
 
 
 class ProductsTrackingSerializer(serializers.HyperlinkedModelSerializer):
