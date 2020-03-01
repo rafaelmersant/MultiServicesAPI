@@ -14,7 +14,13 @@ from .serializers import ProductSerializer, ProductCategorySerializer, \
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
-    max_page_size = 1000
+    max_page_size = 10
+
+
+class StandardResultsSetPaginationLevel2(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 20
 
 
 class ProductList(generics.ListCreateAPIView):
@@ -118,6 +124,7 @@ class ProductsTrackingHeaderList(generics.ListCreateAPIView):
 class ProductsTrackingList(generics.ListCreateAPIView):
     queryset = ProductsTracking.objects.all()
     serializer_class = ProductsTrackingSerializer
+    pagination_class = StandardResultsSetPaginationLevel2
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'company', 'concept', 'header',
                         'product', 'typeTracking', 'createdUser']
