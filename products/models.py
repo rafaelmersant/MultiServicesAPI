@@ -92,3 +92,12 @@ class ProductsStock(models.Model):
 
     def __str__(self):
         return '%s' % (self.quantityAvailable)
+
+
+class PurchaseOrder(models.Model):
+    product = models.ForeignKey(Product, null=True, on_delete=models.SET_NULL)
+    quantity = models.DecimalField(
+        max_digits=18, decimal_places=6, default=0)
+    creationDate = models.DateTimeField(auto_now_add=True, blank=True)
+    pending = models.BooleanField(default=False)
+    objects = models.Manager()
