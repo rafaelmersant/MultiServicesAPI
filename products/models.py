@@ -29,7 +29,12 @@ class Product(models.Model):
     barcode = models.CharField(max_length=20, null=True, blank=True)
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
     createdUser = models.EmailField(null=True, blank=True)
+    minimumStock = models.IntegerField(default=0)
     objects = models.Manager()
+
+    @property
+    def quantity(self):
+        return ProductsStock.objects.get(id=self.id).quantityAvailable
 
     def __str__(self):
         return self.description
@@ -84,3 +89,6 @@ class ProductsStock(models.Model):
     lastUpdated = models.DateTimeField(auto_now_add=True, blank=True)
     modifiedUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()
+
+    def __str__(self):
+        return '%s' % (self.quantityAvailable)

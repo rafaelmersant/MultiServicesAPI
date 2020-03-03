@@ -38,7 +38,7 @@ class ProductList(generics.ListCreateAPIView):
             product.delete()
         except Product.DoesNotExists:
             return Response("Not Found", status=status.HTTP_404_NOT_FOUND)
-        except:
+        except Exception:
             return Response("Internal Error",
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

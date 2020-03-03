@@ -26,7 +26,8 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'company', 'company_id',
                   'description', 'descriptionLong', 'price',
                   'cost', 'itbis', 'category', 'category_id', 'barcode',
-                  'measure', 'model', 'creationDate', 'createdUser')
+                  'measure', 'model', 'creationDate', 'createdUser',
+                  'quantity')
 
 
 class ProductsStockSerializer(serializers.HyperlinkedModelSerializer):

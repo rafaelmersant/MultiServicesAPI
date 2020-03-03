@@ -20,6 +20,7 @@ class InvoicesHeader(models.Model):
     creationDate = models.DateTimeField()
     createdUser = models.EmailField(null=True, blank=True)
     serverDate = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    printed = models.BooleanField(default=False)
     objects = models.Manager()
 
 
