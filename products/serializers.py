@@ -1,5 +1,5 @@
 from .models import Product, ProductCategory, ProductsStock, \
-    ProductsTracking, ProductsTrackingHeader
+    ProductsTracking, ProductsTrackingHeader, PurchaseOrder
 from administration.models import Company
 from administration.serializers import CompanySerializer, ProviderSerializer
 from rest_framework import serializers
@@ -27,7 +27,7 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
                   'description', 'descriptionLong', 'price',
                   'cost', 'itbis', 'category', 'category_id', 'barcode',
                   'measure', 'model', 'creationDate', 'createdUser',
-                  'quantity')
+                  'minimumStock', 'quantity')
 
 
 class ProductsStockSerializer(serializers.HyperlinkedModelSerializer):
@@ -76,3 +76,13 @@ class ProductsTrackingSerializer(serializers.HyperlinkedModelSerializer):
                   'product_id', 'typeTracking', 'concept',
                   'quantity', 'price', 'cost', 'header',
                   'header_id', 'creationDate', 'createdUser')
+
+
+class PurchaseOrderSerializer(serializers.HyperlinkedModelSerializer):
+    product = ProductSerializer(many=False, read_only=True)
+    product_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = PurchaseOrder
+        fields = ('id', 'product', 'product_id', 'quantity',
+                  'pending', 'creationDate')

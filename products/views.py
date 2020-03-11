@@ -5,10 +5,10 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from .models import Product, ProductCategory, ProductsStock, \
-    ProductsTracking, ProductsTrackingHeader
+    ProductsTracking, ProductsTrackingHeader, PurchaseOrder
 from .serializers import ProductSerializer, ProductCategorySerializer, \
     ProductsStockSerializer, ProductsTrackingSerializer, \
-    ProductsTrackingHeaderSerializer
+    ProductsTrackingHeaderSerializer, PurchaseOrderSerializer
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -138,6 +138,28 @@ class ProductsTrackingList(generics.ListCreateAPIView):
         productsTracking = ProductsTracking.objects.get(pk=pk)
         serializer = ProductsTrackingSerializer(
             productsTracking, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PurchaseOrderList(generics.ListCreateAPIView):
+    queryset = PurchaseOrder.objects.all()
+    serializer_class = PurchaseOrderSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['id', 'product', 'quantity']
+
+    def delete(self, request, pk=None):
+        PurchaseOrder = PurchaseOrder.objects.get(pk=pk)
+        PurchaseOrder.delete()
+        return Response("deleted", status=status.HTTP_200_OK)
+
+    def put(self, request, pk, format=None):
+        PurchaseOrder = PurchaseOrder.objects.get(pk=pk)
+        serializer = PurchaseOrderSerializer(
+            PurchaseOrder, data=request.data)
 
         if serializer.is_valid():
             serializer.save()
