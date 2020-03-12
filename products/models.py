@@ -34,7 +34,7 @@ class Product(models.Model):
 
     @property
     def quantity(self):
-        return ProductsStock.objects.get(id=self.id).quantityAvailable
+        return ProductsStock.objects.get(product_id=self.id).quantityAvailable
 
     def __str__(self):
         return self.description
