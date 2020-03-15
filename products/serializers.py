@@ -79,10 +79,13 @@ class ProductsTrackingSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class PurchaseOrderSerializer(serializers.HyperlinkedModelSerializer):
+    company = CompanySerializer(many=False, read_only=True)
+    company_id = serializers.IntegerField(write_only=True)
+
     product = ProductSerializer(many=False, read_only=True)
     product_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = PurchaseOrder
-        fields = ('id', 'product', 'product_id', 'quantity',
-                  'pending', 'creationDate')
+        fields = ('id', 'company', 'company_id', 'product',
+                  'product_id', 'quantity', 'pending', 'creationDate')

@@ -148,18 +148,20 @@ class ProductsTrackingList(generics.ListCreateAPIView):
 class PurchaseOrderList(generics.ListCreateAPIView):
     queryset = PurchaseOrder.objects.all()
     serializer_class = PurchaseOrderSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'product', 'quantity']
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['id', 'company', 'product', 'quantity', 'pending']
+    search_fields = ['product__description', ]
 
     def delete(self, request, pk=None):
-        PurchaseOrder = PurchaseOrder.objects.get(pk=pk)
-        PurchaseOrder.delete()
+        purchaseOrder = PurchaseOrder.objects.get(pk=pk)
+        purchaseOrder.delete()
         return Response("deleted", status=status.HTTP_200_OK)
 
     def put(self, request, pk, format=None):
-        PurchaseOrder = PurchaseOrder.objects.get(pk=pk)
+        purchaseOrder = PurchaseOrder.objects.get(pk=pk)
         serializer = PurchaseOrderSerializer(
-            PurchaseOrder, data=request.data)
+            purchaseOrder, data=request.data)
 
         if serializer.is_valid():
             serializer.save()
