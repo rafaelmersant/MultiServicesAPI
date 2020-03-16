@@ -1,17 +1,26 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
 from django.shortcuts import get_object_or_404
 from django.db.models import Max
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence
 from .serializers import InvoicesHeaderSerializer, InvoicesDetailSerializer, \
     InvoicesSequenceSerializer
 
 
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 10
+
+
 class InvoicesHeaderList(generics.ListCreateAPIView):
     queryset = InvoicesHeader.objects.all()
     serializer_class = InvoicesHeaderSerializer
-    filter_backends = [DjangoFilterBackend]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'company', 'company_id', 'customer', 'sequence',
                         'customer_id', 'paymentMethod', 'ncf', 'createdUser']
 
