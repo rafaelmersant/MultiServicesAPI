@@ -106,3 +106,33 @@ class InvoicesSequenceList(generics.ListCreateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class InvoicesHeaderListFull(generics.ListCreateAPIView):
+    queryset = InvoicesHeader.objects.all()
+    serializer_class = InvoicesHeaderSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['id', 'company', 'company_id', 'customer', 'sequence',
+                        'customer_id', 'paymentMethod', 'ncf', 'createdUser']
+
+    def delete(self, request, pk=None):
+        try:
+            invoiceHeader = InvoicesHeader.objects.get(pk=pk)
+            invoiceHeader.delete()
+        except InvoicesHeader.DoesNotExist:
+            return Response("invoice header not found",
+                            status=status.HTTP_404_NOT_FOUND)
+        except:
+            return Response("Internal Server Error",
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response("deleted", status=status.HTTP_200_OK)
+
+    def put(self, request, pk, format=None):
+        invoiceHeader = InvoicesHeader.objects.get(pk=pk)
+        serializer = InvoicesHeaderSerializer(invoiceHeader, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

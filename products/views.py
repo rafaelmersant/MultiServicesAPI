@@ -101,9 +101,19 @@ class ProductsStockList(generics.ListCreateAPIView):
 class ProductsTrackingHeaderList(generics.ListCreateAPIView):
     queryset = ProductsTrackingHeader.objects.all()
     serializer_class = ProductsTrackingHeaderSerializer
+    pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'company', 'provider',
                         'ncf', 'docDate', 'createdUser', 'paid', 'reference']
+
+    def get_queryset(self):
+        queryset = ProductsTrackingHeader.objects.all()
+
+        provider_name = self.request.query_params.get('provider_name', None)
+        if provider_name is not None:
+            queryset = queryset.filter(
+                provider__firstName__contains=provider_name)
+        return queryset
 
     def delete(self, request, pk=None):
         productsTrackingHeader = ProductsTrackingHeader.objects.get(pk=pk)
