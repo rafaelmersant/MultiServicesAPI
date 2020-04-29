@@ -23,6 +23,12 @@ class StandardResultsSetPaginationLevel2(PageNumberPagination):
     max_page_size = 20
 
 
+class StandardResultsSetPaginationLevel3(PageNumberPagination):
+    page_size = 50
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
+
 class ProductList(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -134,7 +140,7 @@ class ProductsTrackingHeaderList(generics.ListCreateAPIView):
 class ProductsTrackingList(generics.ListCreateAPIView):
     queryset = ProductsTracking.objects.all()
     serializer_class = ProductsTrackingSerializer
-    pagination_class = StandardResultsSetPaginationLevel2
+    pagination_class = StandardResultsSetPaginationLevel3
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'company', 'concept', 'header',
                         'product', 'typeTracking', 'createdUser']
