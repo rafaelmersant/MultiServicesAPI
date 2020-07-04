@@ -23,6 +23,12 @@ class StandardResultsSetPaginationLevel2(PageNumberPagination):
     max_page_size = 20
 
 
+class StandardResultsSetPaginationLevelLong(PageNumberPagination):
+    page_size = 200
+    page_size_query_param = 'page_size'
+    max_page_size = 200
+
+
 class ProductList(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -135,6 +141,30 @@ class ProductsTrackingList(generics.ListCreateAPIView):
     queryset = ProductsTracking.objects.all()
     serializer_class = ProductsTrackingSerializer
     pagination_class = StandardResultsSetPaginationLevel2
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['id', 'company', 'concept', 'header',
+                        'product', 'typeTracking', 'createdUser']
+
+    def delete(self, request, pk=None):
+        productsTracking = ProductsTracking.objects.get(pk=pk)
+        productsTracking.delete()
+        return Response("deleted", status=status.HTTP_200_OK)
+
+    def put(self, request, pk, format=None):
+        productsTracking = ProductsTracking.objects.get(pk=pk)
+        serializer = ProductsTrackingSerializer(
+            productsTracking, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductsTrackingListLong(generics.ListCreateAPIView):
+    queryset = ProductsTracking.objects.all()
+    serializer_class = ProductsTrackingSerializer
+    pagination_class = StandardResultsSetPaginationLevelLong
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'company', 'concept', 'header',
                         'product', 'typeTracking', 'createdUser']
