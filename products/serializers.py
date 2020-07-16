@@ -78,6 +78,20 @@ class ProductsTrackingSerializer(serializers.HyperlinkedModelSerializer):
                   'header_id', 'creationDate', 'createdUser')
 
 
+class ProductsProviderSerializer(serializers.HyperlinkedModelSerializer):
+    product = ProductSerializer(many=False, read_only=True)
+    product_id = serializers.IntegerField(write_only=True)
+
+    header = ProductsTrackingHeaderSerializer(many=False, read_only=True)
+    header_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = ProductsTracking
+        fields = ('id', 'product', 'product_id', 'creationDate',
+                  'price', 'cost', 'header',
+                  'header_id',)
+
+
 class PurchaseOrderSerializer(serializers.HyperlinkedModelSerializer):
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField(write_only=True)

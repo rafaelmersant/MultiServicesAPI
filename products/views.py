@@ -8,7 +8,8 @@ from .models import Product, ProductCategory, ProductsStock, \
     ProductsTracking, ProductsTrackingHeader, PurchaseOrder
 from .serializers import ProductSerializer, ProductCategorySerializer, \
     ProductsStockSerializer, ProductsTrackingSerializer, \
-    ProductsTrackingHeaderSerializer, PurchaseOrderSerializer
+    ProductsTrackingHeaderSerializer, PurchaseOrderSerializer, \
+    ProductsProviderSerializer
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -207,3 +208,30 @@ class PurchaseOrderList(generics.ListCreateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductsProviderReport(generics.ListCreateAPIView):
+    queryset = ProductsTracking.objects.all()
+    serializer_class = ProductsProviderSerializer
+    # pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['id', 'product', 'product_id']
+    search_fields = ['product__description', ]
+
+    def get_queryset(self):
+        product_id = self.request.query_params.get(
+            'product_id', None)
+        if product_id is not None:
+            # sQuery = "SELECT distinct t.id, p.firstName, t.price \
+            #             FROM products_productstracking t \
+            #             INNER JOIN products_productstrackingheader h \
+            #             on h.id = t.header_id \
+            #             INNER JOIN administration_provider p \
+            #             on p.id = h.provider_id \
+            #             where t.id = %s order by t.price" % product_id
+
+            queryset = ProductsTracking.objects.all().order_by("-creationDate")
+            # queryset = ProductsTracking.objects.filter(
+            #     product_id == product_id)
+
+        return queryset
