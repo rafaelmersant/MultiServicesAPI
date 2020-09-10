@@ -141,7 +141,7 @@ class ProductsTrackingHeaderList(generics.ListCreateAPIView):
 class ProductsTrackingList(generics.ListCreateAPIView):
     queryset = ProductsTracking.objects.all()
     serializer_class = ProductsTrackingSerializer
-    pagination_class = StandardResultsSetPaginationLevel3
+    pagination_class = StandardResultsSetPaginationLevel2
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'company', 'concept', 'header',
                         'product', 'typeTracking', 'createdUser']
