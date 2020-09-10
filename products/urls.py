@@ -1,7 +1,7 @@
 from django.conf.urls import url
 from products.views import ProductList, ProductCategoryList, \
     ProductsStockList, ProductsTrackingList, ProductsTrackingHeaderList, \
-    PurchaseOrderList
+    PurchaseOrderList, ProductsTrackingListLong, ProductsProviderReport
 
 urlpatterns = [
     url(r'^products/$', ProductList.as_view(), name='products'),
@@ -29,8 +29,17 @@ urlpatterns = [
     url(r'^productsTrackings/(?P<pk>[0-9]+)', ProductsTrackingList.as_view(),
         name='productsTrackings_byId'),
 
+    url(r'^productsTrackingsLong/$', ProductsTrackingListLong.as_view(),
+        name='productsTrackingsLong'),
+    url(r'^productsTrackingsLong/(?P<pk>[0-9]+)',
+        ProductsTrackingListLong.as_view(),
+        name='productsTrackingsLong_byId'),
+
     url(r'^purchaseOrders/$', PurchaseOrderList.as_view(),
         name='purchaseOrders'),
     url(r'^purchaseOrders/(?P<pk>[0-9]+)', PurchaseOrderList.as_view(),
-        name='purchaseOrders_byId')
+        name='purchaseOrders_byId'),
+
+    url(r'^productsProviders/$', ProductsProviderReport.as_view(),
+        name='products_providers_report')
 ]
