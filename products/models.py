@@ -80,7 +80,9 @@ class ProductsTracking(models.Model):
 
 
 class ProductsStock(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, unique=True)
+    # product = models.ForeignKey(Product, on_delete=models.CASCADE,
+    #  unique=True)
+    product = models.OneToOneField(Product, on_delete=models.CASCADE)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     quantityAvailable = models.DecimalField(
         max_digits=18, decimal_places=6, null=True, blank=True)

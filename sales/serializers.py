@@ -57,8 +57,8 @@ class InvoicesLeadHeaderSerializer(serializers.HyperlinkedModelSerializer):
         model = InvoicesLeadHeader
         fields = ('id', 'company', 'company_id', 'customer', 'customer_id',
                   'paymentMethod',  'ncf', 'creationDate', 'createdUser',
-                  'sequence', 'paid', 'subtotal', 'itbis', 'discount',
-                  'reference', 'serverDate')
+                  'sequence', 'paid', 'printed', 'subtotal', 'itbis',
+                  'discount', 'reference', 'serverDate')
 
 
 class InvoicesLeadDetailSerializer(serializers.HyperlinkedModelSerializer):
