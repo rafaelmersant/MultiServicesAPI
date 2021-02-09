@@ -33,7 +33,7 @@ class StandardResultsSetPaginationLevelLong(PageNumberPagination):
 class ProductList(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    pagination_class = StandardResultsSetPagination
+    pagination_class = StandardResultsSetPaginationLevel2
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'description',
                         'company', 'model', 'category_id', 'barcode']

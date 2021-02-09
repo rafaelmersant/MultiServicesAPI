@@ -15,7 +15,8 @@ urlpatterns = [
 
     url(r'^invoicesSequences/$', InvoicesSequenceList.as_view(),
         name='invoicesSequence'),
-    url(r'^invoicesSequences/(?P<pk>[0-9]+)', InvoicesSequenceList.as_view(),
+    url(r'^invoicesSequences/(?P<pk>[0-9]+)',
+        InvoicesSequenceList.as_view(),
         name='invoicesSequence_byId'),
 
     url(r'^invoicesHeadersFull/$', InvoicesHeaderListFull.as_view(),
