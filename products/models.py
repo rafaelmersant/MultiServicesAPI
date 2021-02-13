@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Sum, Count, Q
 from administration.models import Company, User, Provider
 
 
@@ -35,6 +36,14 @@ class Product(models.Model):
     @property
     def quantity(self):
         return ProductsStock.objects.get(product_id=self.id).quantityAvailable
+
+    @property
+    def ocurrences(self):
+        ocurrences = ProductsTracking.objects \
+            .filter(product_id=self.id) \
+            .filter(typeTracking='S')
+
+        return ocurrences.count()
 
     def __str__(self):
         return self.description

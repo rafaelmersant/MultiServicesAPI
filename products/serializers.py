@@ -27,7 +27,7 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
                   'description', 'descriptionLong', 'price',
                   'cost', 'itbis', 'category', 'category_id', 'barcode',
                   'measure', 'model', 'creationDate', 'createdUser',
-                  'minimumStock', 'quantity')
+                  'minimumStock', 'quantity', 'ocurrences')
 
 
 class ProductsStockSerializer(serializers.HyperlinkedModelSerializer):

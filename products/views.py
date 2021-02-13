@@ -24,6 +24,12 @@ class StandardResultsSetPaginationLevel2(PageNumberPagination):
     max_page_size = 20
 
 
+class StandardResultsSetPaginationLevel3(PageNumberPagination):
+    page_size = 50
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
+
 class StandardResultsSetPaginationLevelLong(PageNumberPagination):
     page_size = 200
     page_size_query_param = 'page_size'
@@ -33,7 +39,7 @@ class StandardResultsSetPaginationLevelLong(PageNumberPagination):
 class ProductList(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    pagination_class = StandardResultsSetPaginationLevel2
+    pagination_class = StandardResultsSetPaginationLevel3
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'description',
                         'company', 'model', 'category_id', 'barcode']
