@@ -1,7 +1,14 @@
+""" Products serializers. """
+
+# Models
 from .models import Product, ProductCategory, ProductsStock, \
     ProductsTracking, ProductsTrackingHeader, PurchaseOrder
 from administration.models import Company
+
+# Serializers
 from administration.serializers import CompanySerializer, ProviderSerializer
+
+# Django REST framework
 from rest_framework import serializers
 
 

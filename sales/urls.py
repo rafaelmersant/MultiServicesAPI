@@ -1,6 +1,11 @@
+""" Sales URLs. """
+
+# Django
 from django.conf.urls import url
+
+# Views
 from sales.views import InvoicesHeaderList, InvoicesDetailList, \
-    InvoicesSequenceList, InvoicesHeaderListFull
+    InvoicesSequenceList, InvoicesHeaderListFull, InvoicesLeadsDetailList
 
 urlpatterns = [
     url(r'^invoicesHeaders/$', InvoicesHeaderList.as_view(),
@@ -21,5 +26,11 @@ urlpatterns = [
 
     url(r'^invoicesHeadersFull/$', InvoicesHeaderListFull.as_view(),
         name='invoicesHeaderFull'),
+
+    url(r'^invoicesLeadsDetails/$', InvoicesLeadsDetailList.as_view(),
+        name='invoicesLeadsDetail'),
+    url(r'^invoicesLeadsDetails/(?P<pk>[0-9]+)',
+        InvoicesLeadsDetailList.as_view(),
+        name='invoicesLeadsDetail_byId'),
 
 ]

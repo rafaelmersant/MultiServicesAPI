@@ -1,5 +1,10 @@
-from .models import Company, User, Customer, FiscalGov, Provider
+""" Administration serializers. """
+
+# Django REST framework
 from rest_framework import serializers
+
+# Models
+from .models import Company, User, Customer, FiscalGov, Provider
 
 
 class CompanySerializer(serializers.HyperlinkedModelSerializer):

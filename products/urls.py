@@ -1,4 +1,9 @@
+""" Products URLs. """
+
+# Django
 from django.conf.urls import url
+
+# Views
 from products.views import ProductList, ProductCategoryList, \
     ProductsStockList, ProductsTrackingList, ProductsTrackingHeaderList, \
     PurchaseOrderList, ProductsTrackingListLong, ProductsProviderReport
