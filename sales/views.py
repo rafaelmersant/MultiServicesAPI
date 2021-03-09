@@ -13,11 +13,12 @@ from rest_framework.pagination import PageNumberPagination
 
 # Models
 from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, \
-    InvoicesLeadDetail
+    InvoicesLeadHeader, InvoicesLeadDetail
 
 # Serializers
 from .serializers import InvoicesHeaderSerializer, InvoicesDetailSerializer, \
-    InvoicesSequenceSerializer, InvoicesLeadDetailSerializer
+    InvoicesSequenceSerializer, InvoicesLeadHeaderSerializer, \
+    InvoicesLeadDetailSerializer
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -159,13 +160,46 @@ class InvoicesHeaderListFull(generics.ListCreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class InvoicesLeadsHeaderList(generics.ListCreateAPIView):
+    """ Invoices leads header list related to an invoice header. """
+
+    queryset = InvoicesLeadHeader.objects.all()
+    serializer_class = InvoicesLeadHeaderSerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['id', 'invoice', 'invoice_id', 'creationDate']
+
+    def delete(self, request, pk=None):
+        try:
+            InvoicesLeadHeader = InvoicesLeadHeader.objects.get(pk=pk)
+            InvoicesLeadHeader.delete()
+        except InvoicesLeadHeader.DoesNotExist:
+            return Response("invoice lead header not found",
+                            status=status.HTTP_404_NOT_FOUND)
+        except:
+            return Response("Internal Server Error",
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response("deleted", status=status.HTTP_200_OK)
+
+    def put(self, request, pk, format=None):
+        InvoicesLeadHeader = InvoicesLeadHeader.objects.get(pk=pk)
+        serializer = InvoicesLeadHeaderSerializer(
+            InvoicesLeadHeader, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class InvoicesLeadsDetailList(generics.ListCreateAPIView):
-    """ Invoices leads details list related to an invoice header. """
+    """ Invoices leads details list related to an invoice lead header. """
 
     queryset = InvoicesLeadDetail.objects.all()
     serializer_class = InvoicesLeadDetailSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'invoice', 'invoice_id',
+    filterset_fields = ['id', 'header', 'header_id',
                         'product', 'product_id', 'creationDate']
 
     def delete(self, request, pk=None):

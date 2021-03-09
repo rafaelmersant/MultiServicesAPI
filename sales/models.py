@@ -175,6 +175,11 @@ class InvoicesLeadHeader(models.Model):
         on_delete=models.SET_NULL,
         null=True
     )
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.SET_NULL,
+        null=True
+    )
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
     objects = models.Manager()
 

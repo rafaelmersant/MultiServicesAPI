@@ -5,7 +5,7 @@ from rest_framework import serializers
 
 # Models
 from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, \
-    InvoicesLeadDetail, QuotationsHeader, QuotationsDetail
+    InvoicesLeadHeader, InvoicesLeadDetail, QuotationsHeader, QuotationsDetail
 
 # Serializers
 from products.serializers import CompanySerializer, ProductSerializer
@@ -57,17 +57,33 @@ class InvoicesSequenceSerializer(serializers.HyperlinkedModelSerializer):
                   'creationDate', 'createdUser')
 
 
-# InvoiceLead --> Conduces
-class InvoicesLeadDetailSerializer(serializers.HyperlinkedModelSerializer):
-    """ Invoices Lead Detail serializer. """
+# InvoiceLeadHeader --> Conduces
+class InvoicesLeadHeaderSerializer(serializers.HyperlinkedModelSerializer):
+    """ Invoices Lead Header serializer. """
 
     invoice = InvoicesHeaderSerializer(many=False, read_only=True)
     invoice_id = serializers.IntegerField(write_only=True)
+
+    company = CompanySerializer(many=False, read_only=True)
+    company_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = InvoicesLeadHeader
+        fields = ('id', 'invoice', 'invoice_id', 'company',
+                  'company_id', 'creationDate')
+
+
+# InvoiceLeadDetail --> Conduces
+class InvoicesLeadDetailSerializer(serializers.HyperlinkedModelSerializer):
+    """ Invoices Lead Detail serializer. """
+
+    header = InvoicesLeadHeaderSerializer(many=False, read_only=True)
+    header_id = serializers.IntegerField(write_only=True)
 
     product = ProductSerializer(many=False, read_only=True)
     product_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = InvoicesLeadDetail
-        fields = ('id', 'invoice', 'invoice_id', 'product', 'product_id',
+        fields = ('id', 'header', 'header_id', 'product', 'product_id',
                   'quantity', 'creationDate')
