@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 
 # Models
 from .models import Company, User, Customer, FiscalGov, Provider
@@ -18,6 +19,12 @@ from .serializers import CompanySerializer, UserSerializer, \
 
 # Others
 import json
+
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 15
+    page_size_query_param = 'page_size'
+    max_page_size = 15
 
 
 class CompanyList(generics.ListCreateAPIView):
@@ -122,6 +129,7 @@ class CustomerList(generics.ListCreateAPIView):
 
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
+    pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'firstName', 'lastName',
                         'email', 'company_id', 'phoneNumber', 'creationDate']
