@@ -1,7 +1,14 @@
+""" Products serializers. """
+
+# Models
 from .models import Product, ProductCategory, ProductsStock, \
     ProductsTracking, ProductsTrackingHeader, PurchaseOrder
 from administration.models import Company
+
+# Serializers
 from administration.serializers import CompanySerializer, ProviderSerializer
+
+# Django REST framework
 from rest_framework import serializers
 
 
@@ -27,7 +34,7 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
                   'description', 'descriptionLong', 'price',
                   'cost', 'itbis', 'category', 'category_id', 'barcode',
                   'measure', 'model', 'creationDate', 'createdUser',
-                  'minimumStock', 'quantity')
+                  'minimumStock', 'quantity', 'ocurrences')
 
 
 class ProductsStockSerializer(serializers.HyperlinkedModelSerializer):

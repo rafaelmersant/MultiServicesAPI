@@ -1,7 +1,14 @@
+""" Administration models. """
+
 from django.db import models
 
 
 class Company(models.Model):
+    """ Company model.
+
+    All companies will be here registered as a master info
+    with their main data.
+    """
     name = models.CharField(max_length=100)
     email = models.EmailField(null=True, blank=True)
     phoneNumber = models.CharField(max_length=50, null=True, blank=True)
@@ -16,6 +23,10 @@ class Company(models.Model):
 
 
 class User(models.Model):
+    """ User model
+
+    This is the local user table.
+    """
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     email = models.EmailField()
     password = models.CharField(max_length=150)
@@ -31,6 +42,10 @@ class User(models.Model):
 
 
 class Customer(models.Model):
+    """ Customer model
+
+    All customers will be saved here with main info.
+    """
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     firstName = models.CharField(max_length=100)
     lastName = models.CharField(max_length=100)
@@ -40,7 +55,10 @@ class Customer(models.Model):
     identification = models.CharField(max_length=20, blank=True)
     identificationType = models.CharField(max_length=1, blank=True)
     creationDate = models.DateTimeField(
-        auto_now_add=True, blank=True, null=True)
+        auto_now_add=True,
+        blank=True,
+        null=True
+    )
     createdUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()
 
@@ -49,6 +67,10 @@ class Customer(models.Model):
 
 
 class Provider(models.Model):
+    """ Provider model
+
+    All providers will be saved here with main info.
+    """
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     firstName = models.CharField(max_length=100)
     lastName = models.CharField(max_length=100, null=True, blank=True)
@@ -57,7 +79,10 @@ class Provider(models.Model):
     phoneNumber = models.CharField(max_length=50, null=True, blank=True)
     rnc = models.CharField(max_length=13, blank=True)
     creationDate = models.DateTimeField(
-        auto_now_add=True, blank=True, null=True)
+        auto_now_add=True,
+        blank=True,
+        null=True
+    )
     createdUser = models.EmailField(null=True, blank=True)
     objects = models.Manager()
 
@@ -69,6 +94,11 @@ class Provider(models.Model):
 
 
 class FiscalGov(models.Model):
+    """ FiscalGov model
+
+    Here will be saved all Fiscal information related to sequential
+    approved by the government.
+    """
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     typeDoc = models.CharField(max_length=4)  # BC01
     start = models.IntegerField()

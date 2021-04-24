@@ -1,15 +1,35 @@
+""" Administration views. """
+
+# Django
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter, OrderingFilter
 from django.shortcuts import get_object_or_404
+
+# Django REST framework
+from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+
+# Models
 from .models import Company, User, Customer, FiscalGov, Provider
+
+# Serializers
 from .serializers import CompanySerializer, UserSerializer, \
     CustomerSerializer, FiscalGovSerializer, ProviderSerializer
+
+# Others
 import json
 
 
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 15
+    page_size_query_param = 'page_size'
+    max_page_size = 15
+
+
 class CompanyList(generics.ListCreateAPIView):
+    """ Company list view """
+
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
     filter_backends = [DjangoFilterBackend]
@@ -39,6 +59,8 @@ class CompanyList(generics.ListCreateAPIView):
 
 
 class UserList(generics.ListCreateAPIView):
+    """ User list view. """
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
     filter_backends = [DjangoFilterBackend]
@@ -69,6 +91,11 @@ class UserList(generics.ListCreateAPIView):
 
 
 class UserLogin(generics.ListCreateAPIView):
+    """ User Login view.
+
+    POST call that allow to login the users.
+    """
+
     serializer_class = UserSerializer
 
     def post(self, request):
@@ -98,8 +125,11 @@ class UserLogin(generics.ListCreateAPIView):
 
 
 class CustomerList(generics.ListCreateAPIView):
+    """ Customer list view. """
+
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
+    pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'firstName', 'lastName',
                         'email', 'company_id', 'phoneNumber', 'creationDate']
@@ -129,6 +159,8 @@ class CustomerList(generics.ListCreateAPIView):
 
 
 class ProviderList(generics.ListCreateAPIView):
+    """ Provider List view. """
+
     queryset = Provider.objects.all()
     serializer_class = ProviderSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -161,6 +193,8 @@ class ProviderList(generics.ListCreateAPIView):
 
 
 class FiscalGovList(generics.ListCreateAPIView):
+    """ Fiscal Goverment list view. """
+
     queryset = FiscalGov.objects.all()
     serializer_class = FiscalGovSerializer
     filter_backends = [DjangoFilterBackend]

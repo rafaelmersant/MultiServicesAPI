@@ -1,11 +1,20 @@
+""" Products views """
+
+# Django
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter, OrderingFilter
 from django.shortcuts import get_object_or_404
+
+# Django REST framework
+from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+
+# Models
 from .models import Product, ProductCategory, ProductsStock, \
     ProductsTracking, ProductsTrackingHeader, PurchaseOrder
+
+# Serializers
 from .serializers import ProductSerializer, ProductCategorySerializer, \
     ProductsStockSerializer, ProductsTrackingSerializer, \
     ProductsTrackingHeaderSerializer, PurchaseOrderSerializer, \
@@ -13,27 +22,43 @@ from .serializers import ProductSerializer, ProductCategorySerializer, \
 
 
 class StandardResultsSetPagination(PageNumberPagination):
+    """ Pagination for 10 records """
+
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 10
 
 
-class StandardResultsSetPaginationLevel2(PageNumberPagination):
+class StandardResultsSetPaginationMedium(PageNumberPagination):
+    """ Pagination for 20 records Level2 """
+
     page_size = 20
     page_size_query_param = 'page_size'
     max_page_size = 20
 
 
-class StandardResultsSetPaginationLevelLong(PageNumberPagination):
+class StandardResultsSetPaginationHigh(PageNumberPagination):
+    """ Pagination for 50 records Level3 """
+
+    page_size = 50
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
+
+class StandardResultsSetPaginationLevelHighest(PageNumberPagination):
+    """ Pagination for 200 records Long """
+
     page_size = 200
     page_size_query_param = 'page_size'
     max_page_size = 200
 
 
 class ProductList(generics.ListCreateAPIView):
+    """ Product list """
+
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    pagination_class = StandardResultsSetPagination
+    pagination_class = StandardResultsSetPaginationHigh
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'description',
                         'company', 'model', 'category_id', 'barcode']
@@ -62,6 +87,8 @@ class ProductList(generics.ListCreateAPIView):
 
 
 class ProductCategoryList(generics.ListCreateAPIView):
+    """ Product category list """
+
     queryset = ProductCategory.objects.all()
     serializer_class = ProductCategorySerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -84,6 +111,8 @@ class ProductCategoryList(generics.ListCreateAPIView):
 
 
 class ProductsStockList(generics.ListCreateAPIView):
+    """ Product stock list """
+
     queryset = ProductsStock.objects.all()
     serializer_class = ProductsStockSerializer
     filter_backends = [DjangoFilterBackend]
@@ -106,6 +135,8 @@ class ProductsStockList(generics.ListCreateAPIView):
 
 
 class ProductsTrackingHeaderList(generics.ListCreateAPIView):
+    """ Products tracking header list """
+
     queryset = ProductsTrackingHeader.objects.all()
     serializer_class = ProductsTrackingHeaderSerializer
     pagination_class = StandardResultsSetPagination
@@ -139,9 +170,11 @@ class ProductsTrackingHeaderList(generics.ListCreateAPIView):
 
 
 class ProductsTrackingList(generics.ListCreateAPIView):
+    """ Products tracking list detail """
+
     queryset = ProductsTracking.objects.all()
     serializer_class = ProductsTrackingSerializer
-    pagination_class = StandardResultsSetPaginationLevel2
+    pagination_class = StandardResultsSetPaginationMedium
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'company', 'concept', 'header',
                         'product', 'typeTracking', 'createdUser']
@@ -163,9 +196,11 @@ class ProductsTrackingList(generics.ListCreateAPIView):
 
 
 class ProductsTrackingListLong(generics.ListCreateAPIView):
+    """ Products tracking list (with more items) """
+
     queryset = ProductsTracking.objects.all()
     serializer_class = ProductsTrackingSerializer
-    pagination_class = StandardResultsSetPaginationLevelLong
+    pagination_class = StandardResultsSetPaginationLevelHighest
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'company', 'concept', 'header',
                         'product', 'typeTracking', 'createdUser']
@@ -187,6 +222,8 @@ class ProductsTrackingListLong(generics.ListCreateAPIView):
 
 
 class PurchaseOrderList(generics.ListCreateAPIView):
+    """ Purchase orders list """
+
     queryset = PurchaseOrder.objects.all()
     serializer_class = PurchaseOrderSerializer
     pagination_class = StandardResultsSetPagination
@@ -211,6 +248,8 @@ class PurchaseOrderList(generics.ListCreateAPIView):
 
 
 class ProductsProviderReport(generics.ListCreateAPIView):
+    """ Products provider report """
+
     queryset = ProductsTracking.objects.all()
     serializer_class = ProductsProviderSerializer
     # pagination_class = StandardResultsSetPagination
@@ -219,19 +258,12 @@ class ProductsProviderReport(generics.ListCreateAPIView):
     search_fields = ['product__description', ]
 
     def get_queryset(self):
-        product_id = self.request.query_params.get(
-            'product_id', None)
-        if product_id is not None:
-            # sQuery = "SELECT distinct t.id, p.firstName, t.price \
-            #             FROM products_productstracking t \
-            #             INNER JOIN products_productstrackingheader h \
-            #             on h.id = t.header_id \
-            #             INNER JOIN administration_provider p \
-            #             on p.id = h.provider_id \
-            #             where t.id = %s order by t.price" % product_id
+        product_id = self.request.query_params.get
+        (
+            'product_id', None
+        )
 
+        if product_id is not None:
             queryset = ProductsTracking.objects.all().order_by("-creationDate")
-            # queryset = ProductsTracking.objects.filter(
-            #     product_id == product_id)
 
         return queryset
