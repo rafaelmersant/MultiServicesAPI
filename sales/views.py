@@ -27,6 +27,12 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 10
 
 
+class StandardResultsSetPagination2(PageNumberPagination):
+    page_size = 50
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
+
 class InvoicesHeaderList(generics.ListCreateAPIView):
     """ Invoices header list data. """
 
@@ -165,7 +171,7 @@ class InvoicesLeadsHeaderList(generics.ListCreateAPIView):
 
     queryset = InvoicesLeadHeader.objects.all()
     serializer_class = InvoicesLeadHeaderSerializer
-    pagination_class = StandardResultsSetPagination
+    pagination_class = StandardResultsSetPagination2
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'invoice', 'invoice_id', 'creationDate']
 
