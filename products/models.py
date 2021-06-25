@@ -40,6 +40,7 @@ class Product(models.Model):
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
     createdUser = models.EmailField(null=True, blank=True)
     minimumStock = models.IntegerField(default=0)
+    updated = models.BooleanField()
     objects = models.Manager()
 
     @property
