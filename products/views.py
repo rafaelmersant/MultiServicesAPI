@@ -1,24 +1,24 @@
 """ Products views """
 
 # Django
-from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import generics, status
 
 # Django REST framework
-from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework import generics, status
-from rest_framework.response import Response
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
 
 # Models
-from .models import Product, ProductCategory, ProductsStock, \
-    ProductsTracking, ProductsTrackingHeader, PurchaseOrder
-
+from .models import (Product, ProductCategory, ProductsStock, ProductsTracking,
+                     ProductsTrackingHeader, PurchaseOrder)
 # Serializers
-from .serializers import ProductSerializer, ProductCategorySerializer, \
-    ProductsStockSerializer, ProductsTrackingSerializer, \
-    ProductsTrackingHeaderSerializer, PurchaseOrderSerializer, \
-    ProductsProviderSerializer
+from .serializers import (ProductCategorySerializer, ProductSerializer,
+                          ProductsProviderSerializer, ProductsStockSerializer,
+                          ProductsTrackingHeaderSerializer,
+                          ProductsTrackingSerializer, PurchaseOrderSerializer)
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -53,61 +53,20 @@ class StandardResultsSetPaginationLevelHighest(PageNumberPagination):
     max_page_size = 200
 
 
-class ProductList(generics.ListCreateAPIView):
-    """ Product list """
-
-    queryset = Product.objects.all()
+class ProductViewSet(ModelViewSet):
+    queryset = Product.objects.select_related('company').select_related('category').all()
     serializer_class = ProductSerializer
     pagination_class = StandardResultsSetPaginationHigh
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['id', 'description',
-                        'company', 'model', 'category_id', 'barcode']
+    filterset_fields = ['id', 'description', 'company', 'model', 'category_id', 'barcode']
     search_fields = ['description', 'barcode']
 
-    def delete(self, request, pk=None):
-        try:
-            product = Product.objects.get(pk=pk)
-            product.delete()
-        except Product.DoesNotExists:
-            return Response("Not Found", status=status.HTTP_404_NOT_FOUND)
-        except Exception:
-            return Response("Internal Error",
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        product = Product.objects.get(pk=pk)
-        serializer = ProductSerializer(product, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class ProductCategoryList(generics.ListCreateAPIView):
-    """ Product category list """
-
-    queryset = ProductCategory.objects.all()
+class ProductCategoryViewSet(ModelViewSet):
+    queryset = ProductCategory.objects.select_related('company').all()
     serializer_class = ProductCategorySerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'description', 'company']
-
-    def delete(self, request, pk=None):
-        productCategory = ProductCategory.objects.get(pk=pk)
-        productCategory.delete()
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        productCategory = ProductCategory.objects.get(pk=pk)
-        serializer = ProductCategorySerializer(
-            productCategory, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProductsStockList(generics.ListCreateAPIView):

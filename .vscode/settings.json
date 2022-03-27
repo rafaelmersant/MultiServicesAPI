@@ -1,6 +1,11 @@
 {
-    "python.linting.pylintEnabled": false,
-    "python.linting.pycodestyleEnabled": true,
-    "python.linting.enabled": true,
-    "python.linting.flake8Enabled": false
+    "python.defaultInterpreterPath": "C:\\Users\\rafae\\Documents\\FERRINMAS\\venvms\\Scripts\\python",
+    "terminal.integrated.profiles.windows": {
+        "PowerShell": {
+          "source": "PowerShell",
+          "icon": "terminal-powershell",
+          "args": ["-ExecutionPolicy", "Bypass"]
+        }
+      },
+      "terminal.integrated.defaultProfile.windows": "PowerShell",
 }

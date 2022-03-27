@@ -12,13 +12,11 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
 # Models
-from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, \
-    InvoicesLeadHeader, InvoicesLeadDetail
+from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, InvoicesLeadHeader, InvoicesLeadDetail
 
 # Serializers
-from .serializers import InvoicesHeaderSerializer, InvoicesDetailSerializer, \
-    InvoicesSequenceSerializer, InvoicesLeadHeaderSerializer, \
-    InvoicesLeadDetailSerializer
+from .serializers import InvoicesHeaderSerializer, InvoicesDetailSerializer, InvoicesSequenceSerializer, \
+    InvoicesLeadHeaderSerializer, InvoicesLeadDetailSerializer
 
 
 class StandardResultsSetPagination(PageNumberPagination):
