@@ -3,7 +3,6 @@
 # Models
 from .models import Product, ProductCategory, ProductsStock, \
     ProductsTracking, ProductsTrackingHeader, PurchaseOrder
-from administration.models import Company
 
 # Serializers
 from administration.serializers import CompanySerializer, ProviderSerializer
@@ -12,7 +11,7 @@ from administration.serializers import CompanySerializer, ProviderSerializer
 from rest_framework import serializers
 
 
-class ProductCategorySerializer(serializers.HyperlinkedModelSerializer):
+class ProductCategorySerializer(serializers.ModelSerializer):
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField(write_only=True)
 
@@ -21,7 +20,7 @@ class ProductCategorySerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'description', 'company', 'company_id', 'creationDate')
 
 
-class ProductSerializer(serializers.HyperlinkedModelSerializer):
+class ProductSerializer(serializers.ModelSerializer):
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField(write_only=True)
 
@@ -30,14 +29,23 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('id', 'company', 'company_id',
-                  'description', 'descriptionLong', 'price',
-                  'cost', 'itbis', 'category', 'category_id', 'barcode',
-                  'measure', 'model', 'creationDate', 'createdUser',
-                  'minimumStock', 'quantity', 'ocurrences', 'updated')
+        fields = ('id', 'company', 'company_id', 'description', 'descriptionLong', 'price', 'cost', 
+                  'itbis', 'category', 'category_id', 'barcode', 'measure', 'model', 'creationDate', 
+                  'createdUser', 'minimumStock', 'quantity', 'updated', 'ocurrences')
 
 
-class ProductsStockSerializer(serializers.HyperlinkedModelSerializer):
+class ProductReducedSerializer(serializers.ModelSerializer):
+    company_id = serializers.IntegerField(write_only=True)
+    category_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = Product
+        fields = ('id', 'company_id', 'description', 'descriptionLong', 'price', 'cost', 
+                  'itbis', 'category_id', 'barcode', 'measure', 'model', 'creationDate', 
+                  'createdUser', 'minimumStock', 'updated')
+    
+   
+class ProductsStockSerializer(serializers.ModelSerializer):
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField(write_only=True)
 
@@ -46,28 +54,28 @@ class ProductsStockSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = ProductsStock
-        fields = ('id', 'company', 'company_id', 'product',
-                  'product_id', 'quantityAvailable',
+        fields = ('company', 'company_id', 'product', 'product_id', 'quantityAvailable',
                   'quantityHold', 'lastUpdated', 'modifiedUser')
 
 
-class ProductsTrackingHeaderSerializer(serializers.HyperlinkedModelSerializer):
+class ProductsTrackingHeaderSerializer(serializers.ModelSerializer):
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField(write_only=True)
 
     provider = ProviderSerializer(many=False, read_only=True)
     provider_id = serializers.IntegerField(write_only=True)
-
+    provider_name = serializers.SerializerMethodField()
+        
     class Meta:
         model = ProductsTrackingHeader
-        fields = ('id', 'company', 'company_id', 'provider',
-                  'provider_id', 'docDate', 'totalAmount',
-                  'itbis', 'ncf', 'serverDate',
-                  'creationDate', 'createdUser',
-                  'reference', 'paid')
+        fields = ('id', 'company', 'company_id', 'provider', 'provider_id', 'provider_name', 'docDate', 
+                  'totalAmount', 'itbis', 'ncf', 'serverDate', 'creationDate', 'createdUser', 'reference', 'paid')
+    
+    def get_provider_name(self, tracking: ProductsTrackingHeader):
+        return tracking.provider.firstName
 
 
-class ProductsTrackingSerializer(serializers.HyperlinkedModelSerializer):
+class ProductsTrackingSerializer(serializers.ModelSerializer):
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField(write_only=True)
 
@@ -85,7 +93,7 @@ class ProductsTrackingSerializer(serializers.HyperlinkedModelSerializer):
                   'header_id', 'creationDate', 'createdUser')
 
 
-class ProductsProviderSerializer(serializers.HyperlinkedModelSerializer):
+class ProductsProviderSerializer(serializers.ModelSerializer):
     product = ProductSerializer(many=False, read_only=True)
     product_id = serializers.IntegerField(write_only=True)
 
@@ -95,11 +103,10 @@ class ProductsProviderSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = ProductsTracking
         fields = ('id', 'product', 'product_id', 'creationDate',
-                  'price', 'cost', 'header',
-                  'header_id',)
+                  'price', 'cost', 'header','header_id',)
 
 
-class PurchaseOrderSerializer(serializers.HyperlinkedModelSerializer):
+class PurchaseOrderSerializer(serializers.ModelSerializer):
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField(write_only=True)
 

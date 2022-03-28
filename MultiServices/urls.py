@@ -1,10 +1,11 @@
 # from django.conf.urls import url, include
+import debug_toolbar
 from django.conf import settings
 from django.contrib import admin
 from rest_framework.authtoken import views
 from rest_framework_simplejwt import views as jwt_views
 
-from django.urls import re_path, include
+from django.urls import include, path, re_path
 
 urlpatterns = [
     re_path('admin/', admin.site.urls),
@@ -16,4 +17,6 @@ urlpatterns = [
         name='token_obtain_pair'),
     re_path(r'^api/v1/token/refresh/',
         jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
+    path('__debug__/', include('debug_toolbar.urls')),
+
 ]

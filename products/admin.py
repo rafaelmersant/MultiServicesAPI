@@ -24,5 +24,5 @@ class ProductsTrackingAdmin(admin.ModelAdmin):
 
 @admin.register(ProductsStock)
 class ProductsStockAdmin(admin.ModelAdmin):
-    list_display = ['id', 'product']
+    list_display = ['product']
     search_fields = ('product',)

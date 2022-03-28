@@ -9,6 +9,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.viewsets import ModelViewSet
 
 # Models
 from .models import Company, User, Customer, FiscalGov, Provider
@@ -27,67 +28,18 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 15
 
 
-class CompanyList(generics.ListCreateAPIView):
-    """ Company list view """
-
+class CompanyViewSet(ModelViewSet):
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'name', 'rnc', 'creationDate']
 
-    def delete(self, request, pk=None):
-        try:
-            company = Company.objects.get(pk=pk)
-            company.delete()
-        except Company.DoesNotExist:
-            return Response("company does not exist",
-                            status=status.HTTP_404_NOT_FOUND)
-        except:
-            return Response("Internal Server Error",
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        company = Company.objects.get(pk=pk)
-        serializer = CompanySerializer(company, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class UserList(generics.ListCreateAPIView):
-    """ User list view. """
-
-    queryset = User.objects.all()
+class UserViewSet(ModelViewSet):
+    queryset = User.objects.select_related('company').all()
     serializer_class = UserSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'email', 'name',
-                        'userRole', 'userHash', 'creationDate']
-
-    def delete(self, request, pk=None):
-        try:
-            user = User.objects.get(pk=pk)
-            user.delete()
-        except User.DoesNotExist:
-            return Response("user does not exist",
-                            status=status.HTTP_404_NOT_FOUND)
-        except:
-            return Response("the user was not found",
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        user = User.objects.get(pk=pk)
-        serializer = UserSerializer(user, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    filterset_fields = ['id', 'email', 'name', 'userRole', 'userHash', 'creationDate']
 
 
 class UserLogin(generics.ListCreateAPIView):
@@ -124,93 +76,25 @@ class UserLogin(generics.ListCreateAPIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
 
-class CustomerList(generics.ListCreateAPIView):
-    """ Customer list view. """
-
-    queryset = Customer.objects.all()
+class CustomerViewSet(ModelViewSet):
+    queryset = Customer.objects.select_related('company').all()
     serializer_class = CustomerSerializer
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['id', 'firstName', 'lastName',
-                        'email', 'company_id', 'phoneNumber', 'creationDate']
+    filterset_fields = ['id', 'firstName', 'lastName', 'email', 'company_id', 'phoneNumber', 'creationDate']
     search_fields = ['firstName', 'lastName', 'phoneNumber']
 
-    def delete(self, request, pk=None):
-        try:
-            customer = Customer.objects.get(pk=pk)
-            customer.delete()
-        except Customer.DoesNotExist:
-            return Response("customer does not exist",
-                            status=status.HTTP_404_NOT_FOUND)
-        except:
-            return Response("Internal Server Error",
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        customer = Customer.objects.get(pk=pk)
-        serializer = CustomerSerializer(customer, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class ProviderList(generics.ListCreateAPIView):
-    """ Provider List view. """
-
-    queryset = Provider.objects.all()
+class ProviderViewSet(ModelViewSet):
+    queryset = Provider.objects.select_related('company').all()
     serializer_class = ProviderSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['id', 'firstName', 'lastName',
-                        'email', 'rnc', 'company_id',
-                        'phoneNumber', 'creationDate']
+    filterset_fields = ['id', 'firstName', 'lastName', 'email', 'rnc', 'company_id', 'phoneNumber', 'creationDate']
     search_fields = ['firstName', 'lastName', 'phoneNumber', 'rnc']
 
-    def delete(self, request, pk=None):
-        try:
-            provider = Provider.objects.get(pk=pk)
-            provider.delete()
-        except Provider.DoesNotExist:
-            return Response("provider does not exist",
-                            status=status.HTTP_404_NOT_FOUND)
-        except:
-            return Response("Internal Server Error",
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        provider = Provider.objects.get(pk=pk)
-        serializer = ProviderSerializer(provider, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class FiscalGovList(generics.ListCreateAPIView):
-    """ Fiscal Goverment list view. """
-
-    queryset = FiscalGov.objects.all()
+    
+class FiscalGovViewSet(ModelViewSet):
+    queryset = FiscalGov.objects.select_related('company').all()
     serializer_class = FiscalGovSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'start', 'end', 'active', 'typeDoc',
-                        'company_id', 'createdUser', 'creationDate']
-
-    def delete(self, request, pk=None):
-        fiscalgov = FiscalGov.objects.get(pk=pk)
-        fiscalgov.delete()
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        fiscalgov = FiscalGov.objects.get(pk=pk)
-        serializer = FiscalGovSerializer(fiscalgov, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    filterset_fields = ['id', 'start', 'end', 'active', 'typeDoc', 'company_id', 'createdUser', 'creationDate']

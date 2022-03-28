@@ -8,11 +8,11 @@ from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, \
     InvoicesLeadHeader, InvoicesLeadDetail, QuotationsHeader, QuotationsDetail
 
 # Serializers
-from products.serializers import CompanySerializer, ProductSerializer
+from products.serializers import CompanySerializer, ProductReducedSerializer, ProductSerializer
 from administration.serializers import CustomerSerializer
 
 
-class InvoicesHeaderSerializer(serializers.HyperlinkedModelSerializer):
+class InvoicesHeaderSerializer(serializers.ModelSerializer):
     """ Invoices header serializer. """
 
     company = CompanySerializer(many=False, read_only=True)
@@ -29,13 +29,23 @@ class InvoicesHeaderSerializer(serializers.HyperlinkedModelSerializer):
                   'discount', 'reference', 'serverDate')
 
 
-class InvoicesDetailSerializer(serializers.HyperlinkedModelSerializer):
+class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):
+    company_id = serializers.IntegerField(read_only=True)
+    customer_id = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = InvoicesHeader
+        fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 'createdUser',
+                  'sequence', 'paid', 'printed', 'subtotal', 'itbis', 'discount', 'reference', 'serverDate')
+
+
+class InvoicesDetailSerializer(serializers.ModelSerializer):
     """ Invoices detail serializer. """
 
-    invoice = InvoicesHeaderSerializer(many=False, read_only=True)
+    invoice = InvoicesHeaderReducedSerializer(many=False, read_only=True)
     invoice_id = serializers.IntegerField(write_only=True)
 
-    product = ProductSerializer(many=False, read_only=True)
+    product = ProductReducedSerializer(many=False, read_only=True)
     product_id = serializers.IntegerField(write_only=True)
 
     class Meta:
@@ -45,7 +55,7 @@ class InvoicesDetailSerializer(serializers.HyperlinkedModelSerializer):
                   'creationDate')
 
 
-class InvoicesSequenceSerializer(serializers.HyperlinkedModelSerializer):
+class InvoicesSequenceSerializer(serializers.ModelSerializer):
     """ Invoices sequence serializer. """
 
     company = CompanySerializer(many=False, read_only=True)
@@ -58,32 +68,39 @@ class InvoicesSequenceSerializer(serializers.HyperlinkedModelSerializer):
 
 
 # InvoiceLeadHeader --> Conduces
-class InvoicesLeadHeaderSerializer(serializers.HyperlinkedModelSerializer):
+class InvoicesLeadHeaderSerializer(serializers.ModelSerializer):
     """ Invoices Lead Header serializer. """
 
-    invoice = InvoicesHeaderSerializer(many=False, read_only=True)
+    invoice = InvoicesHeaderReducedSerializer(read_only=True)
     invoice_id = serializers.IntegerField(write_only=True)
 
-    company = CompanySerializer(many=False, read_only=True)
+    company = CompanySerializer(read_only=True)
     company_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = InvoicesLeadHeader
-        fields = ('id', 'invoice', 'invoice_id', 'company',
-                  'company_id', 'creationDate')
+        fields = ('id', 'invoice', 'invoice_id', 'company', 'company_id', 'creationDate')
+
+
+class InvoicesLeadHeaderReducedSerializer(serializers.ModelSerializer):
+    invoice_id = serializers.IntegerField(write_only=True)
+    company_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = InvoicesLeadHeader
+        fields = ('id', 'invoice_id', 'company_id', 'creationDate')
 
 
 # InvoiceLeadDetail --> Conduces
-class InvoicesLeadDetailSerializer(serializers.HyperlinkedModelSerializer):
+class InvoicesLeadDetailSerializer(serializers.ModelSerializer):
     """ Invoices Lead Detail serializer. """
 
-    header = InvoicesLeadHeaderSerializer(many=False, read_only=True)
+    header = InvoicesLeadHeaderReducedSerializer(many=False, read_only=True)
     header_id = serializers.IntegerField(write_only=True)
 
-    product = ProductSerializer(many=False, read_only=True)
+    product = ProductReducedSerializer(many=False, read_only=True)
     product_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = InvoicesLeadDetail
-        fields = ('id', 'header', 'header_id', 'product', 'product_id',
-                  'quantity', 'creationDate')
+        fields = ('id', 'header', 'header_id', 'product', 'product_id', 'quantity', 'creationDate')
