@@ -49,7 +49,7 @@ class ProductsStockSerializer(serializers.ModelSerializer):
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField(write_only=True)
 
-    product = ProductSerializer(many=False, read_only=True)
+    product = ProductReducedSerializer(many=False, read_only=True)
     product_id = serializers.IntegerField(write_only=True)
 
     class Meta:

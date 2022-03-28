@@ -28,7 +28,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
 class CustomerSerializer(serializers.HyperlinkedModelSerializer):
     company = CompanySerializer(many=False, read_only=True)
-    company_id = serializers.IntegerField(write_only=True)
+    company_id = serializers.IntegerField()
 
     class Meta:
         model = Customer

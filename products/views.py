@@ -63,7 +63,6 @@ class ProductCategoryViewSet(ModelViewSet):
 class ProductsStockViewSet(ModelViewSet):
     queryset = ProductsStock.objects.select_related('company').select_related('product').all()
     serializer_class = ProductsStockSerializer
-    pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['company', 'product', 'modifiedUser']
 

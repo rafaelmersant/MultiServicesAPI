@@ -31,11 +31,12 @@ class InvoicesHeaderSerializer(serializers.ModelSerializer):
 
 class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):
     company_id = serializers.IntegerField(read_only=True)
+    customer = CustomerSerializer(many=False, read_only=True)
     customer_id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = InvoicesHeader
-        fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 'createdUser',
+        fields = ('id', 'company_id', 'customer','customer_id', 'paymentMethod',  'ncf', 'creationDate', 'createdUser',
                   'sequence', 'paid', 'printed', 'subtotal', 'itbis', 'discount', 'reference', 'serverDate')
 
 
@@ -83,6 +84,7 @@ class InvoicesLeadHeaderSerializer(serializers.ModelSerializer):
 
 
 class InvoicesLeadHeaderReducedSerializer(serializers.ModelSerializer):
+    invoice = InvoicesHeaderSerializer(read_only=True)
     invoice_id = serializers.IntegerField(write_only=True)
     company_id = serializers.IntegerField(write_only=True)
 
