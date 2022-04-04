@@ -3,46 +3,41 @@
 # Django REST framework
 from rest_framework import serializers
 
+from administration.models import Company
+
 # Models
 from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, \
     InvoicesLeadHeader, InvoicesLeadDetail, QuotationsHeader, QuotationsDetail
 
 # Serializers
 from products.serializers import CompanySerializer, ProductReducedSerializer, ProductSerializer
-from administration.serializers import CustomerSerializer
+from administration.serializers import CustomerReducedSerializer, CustomerSerializer
 
 
 class InvoicesHeaderSerializer(serializers.ModelSerializer):
-    """ Invoices header serializer. """
-
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField(write_only=True)
 
-    customer = CustomerSerializer(many=False, read_only=True)
+    customer = CustomerReducedSerializer(many=False, read_only=True)
     customer_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = InvoicesHeader
-        fields = ('id', 'company', 'company_id', 'customer', 'customer_id',
-                  'paymentMethod',  'ncf', 'creationDate', 'createdUser',
-                  'sequence', 'paid', 'printed', 'subtotal', 'itbis',
-                  'discount', 'reference', 'serverDate')
+        fields = ('id', 'company', 'company_id', 'customer', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 
+                  'createdUser', 'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'reference', 'serverDate')
 
 
 class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):
-    company_id = serializers.IntegerField(read_only=True)
-    customer = CustomerSerializer(many=False, read_only=True)
-    customer_id = serializers.IntegerField(read_only=True)
+    company_id = serializers.IntegerField()
+    customer_id = serializers.IntegerField()
 
     class Meta:
         model = InvoicesHeader
-        fields = ('id', 'company_id', 'customer','customer_id', 'paymentMethod',  'ncf', 'creationDate', 'createdUser',
-                  'sequence', 'paid', 'printed', 'subtotal', 'itbis', 'discount', 'reference', 'serverDate')
+        fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 'createdUser',
+                  'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'reference', 'serverDate')
 
 
 class InvoicesDetailSerializer(serializers.ModelSerializer):
-    """ Invoices detail serializer. """
-
     invoice = InvoicesHeaderReducedSerializer(many=False, read_only=True)
     invoice_id = serializers.IntegerField(write_only=True)
 
@@ -51,21 +46,43 @@ class InvoicesDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InvoicesDetail
-        fields = ('id', 'invoice', 'invoice_id', 'product', 'product_id',
-                  'quantity', 'price', 'itbis', 'cost', 'discount',
+        fields = ('id', 'invoice', 'invoice_id', 'product', 'product_id', 'quantity', 'price', 
+                  'itbis', 'cost', 'discount', 'creationDate')
+
+
+class InvoicesDetailReducedSerializer(serializers.ModelSerializer):
+    product_id = serializers.IntegerField()
+
+    class Meta:
+        model = InvoicesDetail
+        fields = ('id', 'product_id', 'quantity', 'price', 'itbis', 'cost', 'discount',
                   'creationDate')
 
 
 class InvoicesSequenceSerializer(serializers.ModelSerializer):
-    """ Invoices sequence serializer. """
-
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = InvoicesSequence
-        fields = ('id', 'company', 'company_id', 'sequence',
-                  'creationDate', 'createdUser')
+        fields = ('id', 'company', 'company_id', 'sequence', 'creationDate', 'createdUser')
+
+    def save(self, **kwargs):
+        try:
+            company_id = self.validated_data['company_id']            
+            sequence = InvoicesSequence.objects.get(company__id=company_id)
+            return sequence
+            # raise serializers.ValidationError("This company already has a sequence.")
+        except InvoicesSequence.DoesNotExist:
+            return super().save(**kwargs)
+
+
+class InvoicesSequenceReducedSerializer(serializers.ModelSerializer):
+    company_id = serializers.IntegerField()
+
+    class Meta:
+        model = InvoicesSequence
+        fields = ('id', 'company_id', 'sequence', 'creationDate', 'createdUser')
 
 
 # InvoiceLeadHeader --> Conduces

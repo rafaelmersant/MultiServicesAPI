@@ -7,7 +7,7 @@ from rest_framework import serializers
 from .models import Company, User, Customer, FiscalGov, Provider
 
 
-class CompanySerializer(serializers.HyperlinkedModelSerializer):
+class CompanySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Company
@@ -15,7 +15,7 @@ class CompanySerializer(serializers.HyperlinkedModelSerializer):
                   'address', 'creationDate', 'createdUser')
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField(write_only=True)
 
@@ -26,19 +26,26 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
                   'userHash', 'userRole', 'password')
 
 
-class CustomerSerializer(serializers.HyperlinkedModelSerializer):
+class CustomerSerializer(serializers.ModelSerializer):
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField()
 
     class Meta:
         model = Customer
-        fields = ('id', 'company', 'company_id', 'firstName',
-                  'lastName', 'email', 'phoneNumber', 'address',
-                  'identification', 'identificationType',
-                  'creationDate', 'createdUser')
+        fields = ('id', 'company', 'company_id', 'firstName', 'lastName', 'email', 'phoneNumber', 'address',
+                  'identification', 'identificationType', 'creationDate', 'createdUser')
 
 
-class ProviderSerializer(serializers.HyperlinkedModelSerializer):
+class CustomerReducedSerializer(serializers.ModelSerializer):
+    company_id = serializers.IntegerField()
+
+    class Meta:
+        model = Customer
+        fields = ('id', 'company_id', 'firstName', 'lastName', 'email', 'phoneNumber', 'address',
+                  'identification', 'identificationType', 'creationDate', 'createdUser')
+
+
+class ProviderSerializer(serializers.ModelSerializer):
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField(write_only=True)
 
@@ -49,7 +56,17 @@ class ProviderSerializer(serializers.HyperlinkedModelSerializer):
                   'rnc', 'creationDate', 'createdUser', 'name')
 
 
-class FiscalGovSerializer(serializers.HyperlinkedModelSerializer):
+class ProviderReducedSerializer(serializers.ModelSerializer):
+    company_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = Provider
+        fields = ('id', 'company_id', 'firstName',
+                  'lastName', 'email', 'phoneNumber', 'address',
+                  'rnc', 'creationDate', 'createdUser', 'name')
+
+
+class FiscalGovSerializer(serializers.ModelSerializer):
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField(write_only=True)
 

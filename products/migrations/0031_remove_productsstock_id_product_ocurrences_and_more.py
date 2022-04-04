@@ -11,19 +11,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='productsstock',
-            name='id',
-        ),
         migrations.AddField(
             model_name='product',
             name='ocurrences',
             field=models.PositiveIntegerField(default=0),
-        ),
-        migrations.AlterField(
-            model_name='productsstock',
-            name='product',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, related_name='stocks', serialize=False, to='products.product'),
         ),
         migrations.AlterField(
             model_name='productstracking',

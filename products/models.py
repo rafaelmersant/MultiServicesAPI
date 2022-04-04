@@ -116,9 +116,7 @@ class ProductsTracking(models.Model):
 
 
 class ProductsStock(models.Model):
-    """ Products stock model. """
-
-    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name="stocks", primary_key=True)
+    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name="stocks")
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     quantityAvailable = models.DecimalField(
         max_digits=18,
