@@ -87,8 +87,6 @@ class InvoicesSequenceReducedSerializer(serializers.ModelSerializer):
 
 # InvoiceLeadHeader --> Conduces
 class InvoicesLeadHeaderSerializer(serializers.ModelSerializer):
-    """ Invoices Lead Header serializer. """
-
     invoice = InvoicesHeaderReducedSerializer(read_only=True)
     invoice_id = serializers.IntegerField(write_only=True)
 
@@ -101,9 +99,8 @@ class InvoicesLeadHeaderSerializer(serializers.ModelSerializer):
 
 
 class InvoicesLeadHeaderReducedSerializer(serializers.ModelSerializer):
-    invoice = InvoicesHeaderSerializer(read_only=True)
-    invoice_id = serializers.IntegerField(write_only=True)
-    company_id = serializers.IntegerField(write_only=True)
+    invoice_id = serializers.IntegerField()
+    company_id = serializers.IntegerField()
 
     class Meta:
         model = InvoicesLeadHeader
@@ -112,8 +109,6 @@ class InvoicesLeadHeaderReducedSerializer(serializers.ModelSerializer):
 
 # InvoiceLeadDetail --> Conduces
 class InvoicesLeadDetailSerializer(serializers.ModelSerializer):
-    """ Invoices Lead Detail serializer. """
-
     header = InvoicesLeadHeaderReducedSerializer(many=False, read_only=True)
     header_id = serializers.IntegerField(write_only=True)
 
@@ -123,3 +118,12 @@ class InvoicesLeadDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = InvoicesLeadDetail
         fields = ('id', 'header', 'header_id', 'product', 'product_id', 'quantity', 'creationDate')
+
+
+class InvoicesLeadDetailReducedSerializer(serializers.ModelSerializer):
+    header_id = serializers.IntegerField()
+    product_id = serializers.IntegerField()
+
+    class Meta:
+        model = InvoicesLeadDetail
+        fields = ('id', 'header_id', 'product_id', 'quantity', 'creationDate')

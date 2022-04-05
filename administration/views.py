@@ -2,7 +2,6 @@
 
 # Django
 from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404
 
 # Django REST framework
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -11,8 +10,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 # Serializers
-from .serializers import CompanySerializer, UserSerializer, \
-    CustomerSerializer, FiscalGovSerializer, ProviderSerializer
+from . import serializers
 
 # Others
 import json
@@ -25,16 +23,21 @@ from MultiServices.paginations import StandardResultsSetPaginationAdmin
 
 class CompanyViewSet(ModelViewSet):
     queryset = Company.objects.all()
-    serializer_class = CompanySerializer
+    serializer_class = serializers.CompanySerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'name', 'rnc', 'creationDate']
 
 
 class UserViewSet(ModelViewSet):
     queryset = User.objects.select_related('company').all()
-    serializer_class = UserSerializer
+    serializer_class = serializers.UserSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'email', 'name', 'userRole', 'userHash', 'creationDate']
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return serializers.UserReducedSerializer
+        return serializers.UserSerializer
 
 
 class UserLogin(generics.ListCreateAPIView):
@@ -42,8 +45,7 @@ class UserLogin(generics.ListCreateAPIView):
 
     POST call that allow to login the users.
     """
-
-    serializer_class = UserSerializer
+    serializer_class = serializers.UserSerializer
 
     def post(self, request):
         try:
@@ -73,23 +75,38 @@ class UserLogin(generics.ListCreateAPIView):
 
 class CustomerViewSet(ModelViewSet):
     queryset = Customer.objects.select_related('company').all()
-    serializer_class = CustomerSerializer
+    serializer_class = serializers.CustomerSerializer
     pagination_class = StandardResultsSetPaginationAdmin
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'firstName', 'lastName', 'email', 'company_id', 'phoneNumber', 'creationDate']
     search_fields = ['firstName', 'lastName', 'phoneNumber']
 
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return serializers.CustomerReducedSerializer
+        return serializers.CustomerSerializer
+
 
 class ProviderViewSet(ModelViewSet):
     queryset = Provider.objects.select_related('company').all()
-    serializer_class = ProviderSerializer
+    serializer_class = serializers.ProviderSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'firstName', 'lastName', 'email', 'rnc', 'company_id', 'phoneNumber', 'creationDate']
     search_fields = ['firstName', 'lastName', 'phoneNumber', 'rnc']
 
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return serializers.ProviderReducedSerializer
+        return serializers.ProviderSerializer
+
     
 class FiscalGovViewSet(ModelViewSet):
     queryset = FiscalGov.objects.select_related('company').all()
-    serializer_class = FiscalGovSerializer
+    serializer_class = serializers.FiscalGovSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'start', 'end', 'active', 'typeDoc', 'company_id', 'createdUser', 'creationDate']
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return serializers.FiscalGovReducedSerializer
+        return serializers.FiscalGovSerializer

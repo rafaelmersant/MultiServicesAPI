@@ -21,8 +21,16 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'company', 'company_id', 'email',
-                  'name', 'creationDate', 'createdUser',
+        fields = ('id', 'company', 'company_id', 'email', 'name', 'creationDate', 'createdUser',
+                  'userHash', 'userRole', 'password')
+
+
+class UserReducedSerializer(serializers.ModelSerializer):
+    company_id = serializers.IntegerField()
+
+    class Meta:
+        model = User
+        fields = ('id', 'company_id', 'email', 'name', 'creationDate', 'createdUser',
                   'userHash', 'userRole', 'password')
 
 
@@ -51,18 +59,16 @@ class ProviderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Provider
-        fields = ('id', 'company', 'company_id', 'firstName',
-                  'lastName', 'email', 'phoneNumber', 'address',
+        fields = ('id', 'company', 'company_id', 'firstName', 'lastName', 'email', 'phoneNumber', 'address',
                   'rnc', 'creationDate', 'createdUser', 'name')
 
 
 class ProviderReducedSerializer(serializers.ModelSerializer):
-    company_id = serializers.IntegerField(write_only=True)
+    company_id = serializers.IntegerField()
 
     class Meta:
         model = Provider
-        fields = ('id', 'company_id', 'firstName',
-                  'lastName', 'email', 'phoneNumber', 'address',
+        fields = ('id', 'company_id', 'firstName', 'lastName', 'email', 'phoneNumber', 'address',
                   'rnc', 'creationDate', 'createdUser', 'name')
 
 
@@ -72,6 +78,14 @@ class FiscalGovSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FiscalGov
-        fields = ('id', 'company', 'company_id', 'typeDoc', 'start',
-                  'end', 'current', 'dueDate', 'active', 'usedInInvoice',
-                  'creationDate', 'createdUser')
+        fields = ('id', 'company', 'company_id', 'typeDoc', 'start', 'end', 'current', 'dueDate', 'active',
+                  'usedInInvoice', 'creationDate', 'createdUser')
+
+
+class FiscalGovReducedSerializer(serializers.ModelSerializer):
+    company_id = serializers.IntegerField()
+
+    class Meta:
+        model = FiscalGov
+        fields = ('id', 'company_id', 'typeDoc', 'start', 'end', 'current', 'dueDate', 'active',
+                  'usedInInvoice', 'creationDate', 'createdUser')
