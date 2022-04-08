@@ -1,6 +1,15 @@
 from rest_framework.pagination import PageNumberPagination
 
 
+class InvoiceListPagination(PageNumberPagination):
+    def get_page_size(self, request):
+        customer = request.query_params.get('customer', None)
+        if customer is not None:
+            return 9000
+        else:
+            return 10
+
+
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'

@@ -9,7 +9,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from MultiServices.paginations import StandardResultsSetPagination, StandardResultsSetPaginationHigh
+from MultiServices.paginations import InvoiceListPagination, StandardResultsSetPagination, StandardResultsSetPaginationHigh, StandardResultsSetPaginationMedium
 
 # Serializers
 from . import serializers
@@ -20,7 +20,7 @@ from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, InvoicesLe
 class InvoicesHeaderViewSet(ModelViewSet):
     queryset = InvoicesHeader.objects.select_related('company').select_related('customer').all()
     serializer_class = serializers.InvoicesHeaderSerializer
-    pagination_class = StandardResultsSetPagination
+    pagination_class = InvoiceListPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'company', 'company_id', 'customer', 'sequence', 'customer_id', 
                         'paymentMethod', 'ncf', 'createdUser']
