@@ -108,7 +108,7 @@ class PurchaseOrderViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'put']
     queryset = PurchaseOrder.objects.select_related('company').select_related('product').all()
     serializer_class = PurchaseOrderSerializer
-    pagination_class = StandardResultsSetPagination
+    pagination_class = StandardResultsSetPaginationMedium
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'company', 'product', 'quantity', 'pending']
     search_fields = ['product__description', ]
