@@ -114,7 +114,7 @@ class ProductsTrackingSerializer(serializers.ModelSerializer):
     product = ProductReducedSerializer(many=False, read_only=True)
     product_id = serializers.IntegerField(write_only=True)
 
-    header = ProductsTrackingHeaderReducedSerializer(many=False, read_only=True)
+    header = ProductsTrackingHeaderSerializer(many=False, read_only=True)
     header_id = serializers.IntegerField(write_only=True)
 
     def save(self, **kwargs):
