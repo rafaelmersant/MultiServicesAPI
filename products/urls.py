@@ -11,6 +11,7 @@ from . import views
 
 router = DefaultRouter()
 router.register('products', views.ProductViewSet)
+router.register('productsOcurrences', views.ProductOcurrencesViewSet)
 router.register('productCategories', views.ProductCategoryViewSet)
 router.register('productsStocks', views.ProductsStockViewSet)
 router.register('productsTrackingsHeader', views.ProductsTrackingHeaderViewSet)

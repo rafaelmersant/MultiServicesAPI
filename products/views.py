@@ -39,6 +39,25 @@ class ProductViewSet(ModelViewSet):
         return ProductSerializer
 
 
+class ProductOcurrencesViewSet(ModelViewSet):
+    queryset = Product.objects.select_related('company').select_related('category').select_related('stocks').all()
+    pagination_class = StandardResultsSetPaginationHigh
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['id', 'description', 'company', 'model', 'category_id', 'barcode']
+    search_fields = ['description', 'barcode']
+
+    def get_serializer_class(self):
+        products = Product.objects.all()
+        for prod in products:
+            tracking = ProductsTracking.objects.filter(product_id=prod.id, typeTracking='S').count()
+            prod.ocurrences = tracking
+            prod.save()
+
+        if self.request.method == 'PUT':
+            return ProductReducedSerializer
+        return ProductSerializer
+
+
 class ProductCategoryViewSet(ModelViewSet):
     queryset = ProductCategory.objects.select_related('company').all()
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
