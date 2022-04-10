@@ -9,7 +9,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from MultiServices.paginations import InvoiceListPagination, StandardResultsSetPagination, StandardResultsSetPaginationHigh, StandardResultsSetPaginationMedium
+from MultiServices.paginations import InvoiceListPagination, StandardResultsSetPaginationHigh
 
 # Serializers
 from . import serializers
@@ -26,10 +26,34 @@ class InvoicesHeaderViewSet(ModelViewSet):
                         'paymentMethod', 'ncf', 'createdUser']
     
     def get_serializer_class(self):
-        if self.request.method == 'PUT':
+        sequence = self.request.query_params.get('sequence', None)
+
+        if self.request.method == 'PUT' or (self.request.method == 'GET' and sequence is not None):
             return serializers.InvoicesHeaderReducedSerializer
         return serializers.InvoicesHeaderSerializer
 
+    def get_queryset(self):
+        sequence = self.request.query_params.get('sequence', None)
+       
+        if sequence is not None:
+            query = """
+                    select h.id, h.company_id, m.address company_address, m.rnc company_rnc, m.email company_email, m.phoneNumber company_phoneNumber, 
+                                customer_id, c.firstName customer_firstName, c.lastName customer_lastName, c.identification customer_identification, 
+                                c.address customer_address, c.email customer_email, h.paymentMethod, h.ncf, h.createdUser, h.creationDate, 
+                                h.sequence, h.paid, h.printed, h.subtotal, h.itbis, h.discount, h.reference, h.serverDate
+                        from sales_invoicesheader h
+                        inner join administration_customer c on c.id = h.customer_id
+                        inner join administration_company m on m.id = h.company_id
+                        where h.sequence = {sequence}
+                    """
+            if sequence is not None:
+                query = query.replace("{sequence}", sequence)
+            else:
+                query = query.replace("where h.sequence = {sequence}", "")
+            
+            self.queryset = InvoicesHeader.objects.raw(query)
+            
+        return self.queryset
 
 class InvoicesDetailViewSet(ModelViewSet):
     queryset = InvoicesDetail.objects.select_related('product').select_related('invoice').all()
@@ -49,7 +73,38 @@ class InvoicesDetailReducedViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'product', 'creationDate']
 
+
+class InvoicesDetailSimpleViewSet(ModelViewSet):
+    filter_backends = [SearchFilter,]
+    filterset_fields = ['id', 'invoice_id', 'creationDate']
     
+    def get_serializer_class(self):
+        invoice = self.request.query_params.get('invoice', None)
+        
+        if self.request.method == 'GET' and (invoice is not None):
+            return serializers.InvoicesDetailSimpleSerializer
+        return serializers.InvoicesDetailSimpleSerializer
+    
+    def get_queryset(self):
+        invoice = self.request.query_params.get('invoice', None)
+       
+        query = """
+                select d.id, d.invoice_id, d.product_id, p.description as product_description, d.quantity, d.price, d.cost, d.itbis, d.discount
+                        from sales_invoicesdetail d
+                        inner join products_product p on p.id = d.product_id
+                        where d.invoice_id = {invoice_id}
+                        order by d.id
+                """
+        if invoice is not None:
+            query = query.replace("{invoice_id}", invoice)
+        else:
+            query = query.replace("where d.invoice_id = {invoice_id}", "")
+        
+        queryset = InvoicesDetail.objects.raw(query)
+        
+        return queryset
+
+
 class InvoicesSequenceViewSet(ModelViewSet):
     queryset = InvoicesSequence.objects.select_related('company').all()
     serializer_class = serializers.InvoicesSequenceSerializer

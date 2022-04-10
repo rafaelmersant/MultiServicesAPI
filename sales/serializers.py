@@ -27,14 +27,26 @@ class InvoicesHeaderSerializer(serializers.ModelSerializer):
                   'createdUser', 'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'reference', 'serverDate')
 
 
-class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):
+class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):    
     company_id = serializers.IntegerField()
+    company_address = serializers.CharField(max_length=255)
+    company_rnc = serializers.CharField(max_length=20)
+    company_phoneNumber = serializers.CharField(max_length=50)
+    company_email = serializers.EmailField()
+    
     customer_id = serializers.IntegerField()
+    customer_firstName = serializers.CharField(max_length=100)
+    customer_lastName = serializers.CharField(max_length=100)
+    customer_email = serializers.EmailField()
+    customer_address = serializers.CharField(max_length=200)
+    customer_identification = serializers.CharField(max_length=20)
 
     class Meta:
         model = InvoicesHeader
-        fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 'createdUser',
-                  'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'reference', 'serverDate')
+        fields = ('id', 'company_id', 'company_address', 'company_rnc', 'company_phoneNumber', 'company_email',
+                  'customer_id', 'customer_firstName', 'customer_lastName', 'customer_email', 'customer_address',
+                  'customer_identification', 'paymentMethod', 'sequence', 'ncf', 'paid', 'printed', 'subtotal', 'itbis',
+                  'discount', 'reference', 'serverDate', 'creationDate')
 
 
 class InvoicesDetailSerializer(serializers.ModelSerializer):
@@ -48,6 +60,18 @@ class InvoicesDetailSerializer(serializers.ModelSerializer):
         model = InvoicesDetail
         fields = ('id', 'invoice', 'invoice_id', 'product', 'product_id', 'quantity', 'price', 
                   'itbis', 'cost', 'discount', 'creationDate')
+
+
+class InvoicesDetailSimpleSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    invoice_id = serializers.IntegerField()
+    product_id = serializers.IntegerField()
+    product_description = serializers.CharField(max_length=255)
+    quantity = serializers.DecimalField(max_digits=18,decimal_places=6)
+    price = serializers.DecimalField(max_digits=18,decimal_places=6)
+    cost = serializers.DecimalField(max_digits=18,decimal_places=6)
+    itbis = serializers.DecimalField(max_digits=18,decimal_places=6)
+    discount = serializers.DecimalField(max_digits=18,decimal_places=6)
 
 
 class InvoicesDetailReducedSerializer(serializers.ModelSerializer):

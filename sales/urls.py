@@ -13,11 +13,13 @@ from . import views
 router = DefaultRouter()
 router.register('invoicesHeaders', views.InvoicesHeaderViewSet)
 router.register('invoicesDetails', views.InvoicesDetailViewSet)
+router.register('InvoicesDetailSimple', views.InvoicesDetailSimpleViewSet, basename="details")
 router.register('invoicesDetailsReduced', views.InvoicesDetailReducedViewSet)
 router.register('invoicesSequences', views.InvoicesSequenceViewSet)
 router.register('invoicesHeadersFull', views.InvoicesHeaderListFull)
 router.register('invoicesLeadHeader', views.InvoicesLeadsHeaderViewSet)
 router.register('invoicesLeadDetail', views.InvoicesLeadsDetailViewSet)
+
 
 urlpatterns = [
     path('', include(router.urls)),
