@@ -16,7 +16,7 @@ from .serializers import (ProductCategoryReducedSerializer, ProductCategorySeria
                           ProductsStockReducedSerializer, ProductsStockSerializer, ProductsTrackingHeaderReducedSerializer, ProductsTrackingHeaderSerializer, ProductsTrackingReducedSerializer,
                           ProductsTrackingSerializer, PurchaseOrderReducedSerializer, PurchaseOrderSerializer)
 
-from MultiServices.paginations import (StandardResultsSetPagination, StandardResultsSetPaginationHigh,
+from MultiServices.paginations import (ProviderInventoryListPagination, StandardResultsSetPagination, StandardResultsSetPaginationHigh,
                                     StandardResultsSetPaginationLevelHighest, StandardResultsSetPaginationMedium)
 
 
@@ -84,7 +84,7 @@ class ProductsStockViewSet(ModelViewSet):
 class ProductsTrackingHeaderViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'put']
     queryset = ProductsTrackingHeader.objects.select_related('company').select_related('provider').all()
-    pagination_class = StandardResultsSetPagination
+    pagination_class = ProviderInventoryListPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'company', 'provider', 'ncf', 'docDate', 'createdUser', 'paid', 'reference']
 
@@ -93,12 +93,13 @@ class ProductsTrackingHeaderViewSet(ModelViewSet):
             return ProductsTrackingHeaderReducedSerializer
         return ProductsTrackingHeaderSerializer
 
-    # def get_queryset(self):
-    #     provider_name = self.request.query_params.get('provider_name', None)
-    #     if provider_name is not None:
-    #         queryset = queryset.filter(
-    #             provider__firstName__contains=provider_name)
-    #     return queryset
+    def get_queryset(self):
+        provider_name = self.request.query_params.get('provider_name', None)
+        if provider_name is not None:
+            self.queryset = self.queryset.filter(
+                provider__firstName__contains=provider_name)
+    
+        return self.queryset
 
 
 class ProductsTrackingViewSet(ModelViewSet):

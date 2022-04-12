@@ -10,6 +10,15 @@ class InvoiceListPagination(PageNumberPagination):
             return 10
 
 
+class ProviderInventoryListPagination(PageNumberPagination):
+    def get_page_size(self, request):
+        provider_name = request.query_params.get('provider_name', None)
+        if provider_name is not None and len(provider_name) > 0:
+            return 999999
+        else:
+            return 10
+
+
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'

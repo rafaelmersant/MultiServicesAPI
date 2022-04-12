@@ -21,7 +21,7 @@ class InvoicesHeaderViewSet(ModelViewSet):
     queryset = InvoicesHeader.objects.select_related('company').select_related('customer').all()
     serializer_class = serializers.InvoicesHeaderSerializer
     pagination_class = InvoiceListPagination
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filter_backends = [SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'company', 'company_id', 'customer', 'sequence', 'customer_id', 
                         'paymentMethod', 'ncf', 'createdUser']
     
