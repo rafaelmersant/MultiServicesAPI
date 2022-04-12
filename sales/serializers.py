@@ -27,6 +27,16 @@ class InvoicesHeaderSerializer(serializers.ModelSerializer):
                   'createdUser', 'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'reference', 'serverDate')
 
 
+class InvoicesHeaderUpdateSerializer(serializers.ModelSerializer):
+    company_id = serializers.IntegerField()
+    customer_id = serializers.IntegerField()
+
+    class Meta:
+        model = InvoicesHeader
+        fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 
+                  'createdUser', 'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'reference', 'serverDate')
+
+
 class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):    
     company_id = serializers.IntegerField()
     company_address = serializers.CharField(max_length=255)

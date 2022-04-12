@@ -28,7 +28,9 @@ class InvoicesHeaderViewSet(ModelViewSet):
     def get_serializer_class(self):
         sequence = self.request.query_params.get('sequence', None)
 
-        if self.request.method == 'PUT' or (self.request.method == 'GET' and sequence is not None):
+        if self.request.method == 'PUT':
+            return serializers.InvoicesHeaderUpdateSerializer
+        elif self.request.method == 'GET' and sequence is not None:
             return serializers.InvoicesHeaderReducedSerializer
         return serializers.InvoicesHeaderSerializer
 
