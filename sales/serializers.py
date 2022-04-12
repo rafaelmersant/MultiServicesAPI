@@ -133,7 +133,9 @@ class InvoicesLeadHeaderReducedSerializer(serializers.ModelSerializer):
 
 class InvoicesLeadHeaderListSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    customer = serializers.CharField(max_length=255)
+    customer = serializers.CharField(max_length=200)
+    customer_identification = serializers.CharField(max_length=20)
+    customer_identification_type = serializers.CharField(max_length=1)
     invoice_no = serializers.IntegerField()
     creationDate = serializers.DateTimeField()
     company_id = serializers.IntegerField()

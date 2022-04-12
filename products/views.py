@@ -102,7 +102,6 @@ class ProductsTrackingHeaderViewSet(ModelViewSet):
 
 
 class ProductsTrackingViewSet(ModelViewSet):
-    http_method_names = ['get', 'post', 'put']
     queryset = ProductsTracking.objects.select_related('company').prefetch_related('product').prefetch_related('header').all()
     pagination_class = StandardResultsSetPaginationMedium
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]

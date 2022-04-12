@@ -129,7 +129,15 @@ class InvoicesHeaderListFull(ModelViewSet):
     serializer_class = serializers.InvoicesHeaderSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'company', 'company_id', 'customer', 'sequence',  'customer_id', 
-                        'paymentMethod', 'ncf', 'createdUser']
+                        'paymentMethod', 'ncf', 'createdUser', 'creationDate']
+    
+    def get_queryset(self):
+        year = self.request.query_params.get("year", None)
+
+        if (year is not None):
+            self.queryset = self.queryset.filter(creationDate__year=year)
+        
+        return self.queryset
 
     
 class InvoicesLeadsHeaderViewSet(ModelViewSet):
@@ -155,7 +163,8 @@ class InvoicesLeadsHeaderViewSet(ModelViewSet):
         id = self.request.query_params.get('id', None)
 
         query = """
-                select h.id, c.firstName || ' ' || c.lastName customer, i.sequence invoice_no, h.creationDate, h.company_id
+                select h.id, c.firstName || ' ' || c.lastName customer, i.sequence invoice_no, h.creationDate, h.company_id,
+                        c.identification customer_identification, c.identificationType customer_identification_type
                         from sales_invoicesLeadHeader h
                         inner join sales_invoicesheader i on i.id = h.invoice_id
                         inner join administration_customer c on c.id = i.customer_id
