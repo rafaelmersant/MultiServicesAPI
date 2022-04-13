@@ -28,7 +28,7 @@ class InvoicesHeaderViewSet(ModelViewSet):
     def get_serializer_class(self):
         sequence = self.request.query_params.get('sequence', None)
 
-        if self.request.method == 'PUT':
+        if self.request.method == 'PUT' or self.request.method == 'POST':
             return serializers.InvoicesHeaderUpdateSerializer
         elif self.request.method == 'GET' and sequence is not None:
             return serializers.InvoicesHeaderReducedSerializer
@@ -85,7 +85,9 @@ class InvoicesDetailSimpleViewSet(ModelViewSet):
         
         if self.request.method == 'GET' and (invoice is not None):
             return serializers.InvoicesDetailSimpleSerializer
-        return serializers.InvoicesDetailSimpleSerializer
+        if self.request.method == 'PUT' or self.request.method == 'POST':
+            return serializers.InvoicesDetailReducedSerializer
+        return serializers.InvoicesDetailSerializer
     
     def get_queryset(self):
         invoice = self.request.query_params.get('invoice', None)

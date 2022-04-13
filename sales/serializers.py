@@ -60,7 +60,7 @@ class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):
 
 
 class InvoicesDetailSerializer(serializers.ModelSerializer):
-    invoice = InvoicesHeaderReducedSerializer(many=False, read_only=True)
+    invoice = InvoicesHeaderUpdateSerializer(many=False, read_only=True)
     invoice_id = serializers.IntegerField(write_only=True)
 
     product = ProductReducedSerializer(many=False, read_only=True)
