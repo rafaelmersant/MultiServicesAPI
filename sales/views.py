@@ -27,7 +27,7 @@ class InvoicesHeaderViewSet(ModelViewSet):
     
     def get_serializer_class(self):
         sequence = self.request.query_params.get('sequence', None)
-
+        
         if self.request.method == 'PUT' or self.request.method == 'POST':
             return serializers.InvoicesHeaderUpdateSerializer
         elif self.request.method == 'GET' and sequence is not None:
@@ -36,7 +36,7 @@ class InvoicesHeaderViewSet(ModelViewSet):
 
     def get_queryset(self):
         sequence = self.request.query_params.get('sequence', None)
-       
+        
         if sequence is not None:
             query = """
                     select h.id, h.company_id, m.address company_address, m.rnc company_rnc, m.email company_email, m.phoneNumber company_phoneNumber, 
@@ -52,9 +52,50 @@ class InvoicesHeaderViewSet(ModelViewSet):
                 query = query.replace("{sequence}", sequence)
             else:
                 query = query.replace("where h.sequence = {sequence}", "")
-            
-            self.queryset = InvoicesHeader.objects.raw(query)
-            
+           
+            return InvoicesHeader.objects.raw(query)
+        
+        return self.queryset
+
+
+class InvoicesHeaderCustomerViewSet(ModelViewSet):
+    queryset = InvoicesHeader.objects.select_related('company').select_related('customer').all()
+    serializer_class = serializers.InvoicesHeaderSerializer
+    pagination_class = InvoiceListPagination
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['id', 'company', 'company_id', 'customer', 'sequence', 'customer_id', 
+                        'paymentMethod', 'ncf', 'createdUser']
+    
+    def get_serializer_class(self):
+        sequence = self.request.query_params.get('sequence', None)
+        
+        if self.request.method == 'PUT' or self.request.method == 'POST':
+            return serializers.InvoicesHeaderUpdateSerializer
+        elif self.request.method == 'GET' and sequence is not None:
+            return serializers.InvoicesHeaderReducedSerializer
+        return serializers.InvoicesHeaderSerializer
+
+    def get_queryset(self):
+        sequence = self.request.query_params.get('sequence', None)
+        
+        if sequence is not None:
+            query = """
+                    select h.id, h.company_id, m.address company_address, m.rnc company_rnc, m.email company_email, m.phoneNumber company_phoneNumber, 
+                                customer_id, c.firstName customer_firstName, c.lastName customer_lastName, c.identification customer_identification, 
+                                c.address customer_address, c.email customer_email, h.paymentMethod, h.ncf, h.createdUser, h.creationDate, 
+                                h.sequence, h.paid, h.printed, h.subtotal, h.itbis, h.discount, h.reference, h.serverDate
+                        from sales_invoicesheader h
+                        inner join administration_customer c on c.id = h.customer_id
+                        inner join administration_company m on m.id = h.company_id
+                        where h.sequence = {sequence}
+                    """
+            if sequence is not None:
+                query = query.replace("{sequence}", sequence)
+            else:
+                query = query.replace("where h.sequence = {sequence}", "")
+           
+            return InvoicesHeader.objects.raw(query)
+        
         return self.queryset
 
 class InvoicesDetailViewSet(ModelViewSet):

@@ -12,6 +12,7 @@ from . import views
 
 router = DefaultRouter()
 router.register('invoicesHeaders', views.InvoicesHeaderViewSet)
+router.register('invoicesHeadersCustomer', views.InvoicesHeaderCustomerViewSet)
 router.register('invoicesDetails', views.InvoicesDetailViewSet)
 router.register('InvoicesDetailSimple', views.InvoicesDetailSimpleViewSet, basename="details")
 router.register('invoicesDetailsReduced', views.InvoicesDetailReducedViewSet)
