@@ -18,7 +18,7 @@ router.register('InvoicesDetailSimple', views.InvoicesDetailSimpleViewSet, basen
 router.register('invoicesDetailsReduced', views.InvoicesDetailReducedViewSet)
 router.register('invoicesSequences', views.InvoicesSequenceViewSet)
 router.register('invoicesHeadersFull', views.InvoicesHeaderListFull)
-router.register('invoicesLeadHeader', views.InvoicesLeadsHeaderViewSet)
+router.register('invoicesLeadHeader', views.InvoicesLeadsHeaderViewSet, basename="leadHeaders")
 router.register('invoicesLeadDetail', views.InvoicesLeadsDetailViewSet)
 
 

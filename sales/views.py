@@ -196,7 +196,7 @@ class InvoicesLeadsHeaderViewSet(ModelViewSet):
         company = self.request.query_params.get('company', None)
         id = self.request.query_params.get('id', None)
 
-        if self.request.method == 'PUT':
+        if self.request.method == 'PUT' or self.request.method == 'POST':
             return serializers.InvoicesLeadHeaderReducedSerializer
         elif self.request.method == 'GET' and (company is not None or id is not None):
             return serializers.InvoicesLeadHeaderListSerializer
@@ -220,6 +220,7 @@ class InvoicesLeadsHeaderViewSet(ModelViewSet):
             query = query.replace("{company_id}", company_id)
         else:
             query = query.replace(" and h.company_id = {company_id}", "")
+
         if invoice_id is not None:
             query = query.replace("{invoice_sequence}", invoice_id)
         else:
