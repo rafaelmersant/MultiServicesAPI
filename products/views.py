@@ -95,9 +95,15 @@ class ProductsTrackingHeaderViewSet(ModelViewSet):
 
     def get_queryset(self):
         provider_name = self.request.query_params.get('provider_name', None)
+        year = self.request.query_params.get('year', None)
+
         if provider_name is not None:
             self.queryset = self.queryset.filter(
                 provider__firstName__contains=provider_name)
+        
+        if year is not None:
+            self.queryset = self.queryset.filter(
+                creationDate__year=year)
     
         return self.queryset
 

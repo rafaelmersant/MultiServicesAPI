@@ -13,7 +13,9 @@ class InvoiceListPagination(PageNumberPagination):
 class ProviderInventoryListPagination(PageNumberPagination):
     def get_page_size(self, request):
         provider_name = request.query_params.get('provider_name', None)
-        if provider_name is not None and len(provider_name) > 0:
+        year = request.query_params.get('year', None)
+
+        if (provider_name is not None and len(provider_name) > 0) or year is not None:
             return 999999
         else:
             return 10
