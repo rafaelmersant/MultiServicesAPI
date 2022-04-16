@@ -12,11 +12,13 @@ from rest_framework.viewsets import ModelViewSet
 from .models import (Product, ProductCategory, ProductsStock, ProductsTracking,
                      ProductsTrackingHeader, PurchaseOrder)
 # Serializers
-from .serializers import (ProductCategoryReducedSerializer, ProductCategorySerializer, ProductReducedSerializer, ProductSerializer, ProductsProviderSerializer,  
-                          ProductsStockReducedSerializer, ProductsStockSerializer, ProductsTrackingHeaderReducedSerializer, ProductsTrackingHeaderSerializer, ProductsTrackingReducedSerializer,
+from .serializers import (ProductCategoryReducedSerializer, ProductCategorySerializer, ProductReducedSerializer, 
+                          ProductSerializer, ProductsProviderSerializer, ProductsStockReducedSerializer, 
+                          ProductsStockSerializer, ProductsTrackingHeaderReducedSerializer, 
+                          ProductsTrackingHeaderSerializer, ProductsTrackingReducedSerializer,
                           ProductsTrackingSerializer, PurchaseOrderReducedSerializer, PurchaseOrderSerializer)
 
-from MultiServices.paginations import (ProviderInventoryListPagination, StandardResultsSetPagination, StandardResultsSetPaginationHigh,
+from MultiServices.paginations import (ProviderInventoryListPagination, StandardResultsSetPaginationHigh,
                                     StandardResultsSetPaginationLevelHighest, StandardResultsSetPaginationMedium)
 
 
@@ -28,12 +30,6 @@ class ProductViewSet(ModelViewSet):
     search_fields = ['description', 'barcode']
 
     def get_serializer_class(self):
-        # products = Product.objects.all()
-        # for prod in products:
-        #     tracking = ProductsTracking.objects.filter(product_id=prod.id, typeTracking='S').count()
-        #     prod.ocurrences = tracking
-        #     prod.save()
-
         if self.request.method == 'PUT':
             return ProductReducedSerializer
         return ProductSerializer

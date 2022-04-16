@@ -39,10 +39,12 @@ class InvoicesHeaderViewSet(ModelViewSet):
         
         if sequence is not None:
             query = """
-                    select h.id, h.company_id, m.address company_address, m.rnc company_rnc, m.email company_email, m.phoneNumber company_phoneNumber, 
-                                customer_id, c.firstName customer_firstName, c.lastName customer_lastName, c.identification customer_identification, 
-                                c.address customer_address, c.email customer_email, h.paymentMethod, h.ncf, h.createdUser, h.creationDate, 
-                                h.sequence, h.paid, h.printed, h.subtotal, h.itbis, h.discount, h.reference, h.serverDate
+                    select h.id, h.company_id, m.address company_address, m.rnc company_rnc, m.email company_email, 
+                                m.phoneNumber company_phoneNumber, customer_id, c.firstName customer_firstName, 
+                                c.lastName customer_lastName, c.identification customer_identification, 
+                                c.address customer_address, c.email customer_email, h.paymentMethod, h.ncf, h.createdUser, 
+                                h.creationDate, h.sequence, h.paid, h.printed, h.subtotal, h.itbis, h.discount, 
+                                h.reference, h.serverDate
                         from sales_invoicesheader h
                         inner join administration_customer c on c.id = h.customer_id
                         inner join administration_company m on m.id = h.company_id
@@ -58,7 +60,8 @@ class InvoicesHeaderViewSet(ModelViewSet):
         return self.queryset
 
 
-class InvoicesHeaderCustomerViewSet(ModelViewSet):
+class InvoicesHeaderSearchViewSet(ModelViewSet):
+    http_method_names = ['get']
     queryset = InvoicesHeader.objects.select_related('company').select_related('customer').all()
     serializer_class = serializers.InvoicesHeaderSerializer
     pagination_class = InvoiceListPagination
@@ -66,11 +69,6 @@ class InvoicesHeaderCustomerViewSet(ModelViewSet):
     filterset_fields = ['id', 'company', 'company_id', 'customer', 'sequence', 'customer_id', 
                          'paymentMethod', 'ncf', 'createdUser']
     
-    def get_serializer_class(self):
-        if self.request.method == 'PUT' or self.request.method == 'POST':
-            return serializers.InvoicesHeaderUpdateSerializer
-        return serializers.InvoicesHeaderSerializer
-
 
 class InvoicesDetailViewSet(ModelViewSet):
     queryset = InvoicesDetail.objects.select_related('product').select_related('invoice').all()
@@ -92,17 +90,10 @@ class InvoicesDetailReducedViewSet(ModelViewSet):
 
 
 class InvoicesDetailSimpleViewSet(ModelViewSet):
+    http_method_names = ['get']
+    serializer_class = serializers.InvoicesDetailSimpleSerializer
     filter_backends = [SearchFilter,]
     filterset_fields = ['id', 'invoice_id', 'creationDate']
-    
-    def get_serializer_class(self):
-        invoice = self.request.query_params.get('invoice', None)
-        
-        if self.request.method == 'GET' and (invoice is not None):
-            return serializers.InvoicesDetailSimpleSerializer
-        if self.request.method == 'PUT' or self.request.method == 'POST':
-            return serializers.InvoicesDetailReducedSerializer
-        return serializers.InvoicesDetailSerializer
     
     def get_queryset(self):
         invoice = self.request.query_params.get('invoice', None)
@@ -182,8 +173,9 @@ class InvoicesLeadsHeaderViewSet(ModelViewSet):
         id = self.request.query_params.get('id', None)
 
         query = """
-                select h.id, c.firstName || ' ' || c.lastName customer, i.sequence invoice_no, h.creationDate, h.company_id,
-                        c.identification customer_identification, c.identificationType customer_identification_type
+                select h.id, c.firstName || ' ' || c.lastName customer, i.sequence invoice_no, 
+                        h.creationDate, h.company_id, c.identification customer_identification, 
+                        c.identificationType customer_identification_type
                         from sales_invoicesLeadHeader h
                         inner join sales_invoicesheader i on i.id = h.invoice_id
                         inner join administration_customer c on c.id = i.customer_id
