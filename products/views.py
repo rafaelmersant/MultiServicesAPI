@@ -1,269 +1,165 @@
 """ Products views """
 
 # Django
-from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 
 # Django REST framework
-from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.viewsets import ModelViewSet
 
 # Models
-from .models import Product, ProductCategory, ProductsStock, \
-    ProductsTracking, ProductsTrackingHeader, PurchaseOrder
-
+from .models import (Product, ProductCategory, ProductsStock, ProductsTracking,
+                     ProductsTrackingHeader, PurchaseOrder)
 # Serializers
-from .serializers import ProductSerializer, ProductCategorySerializer, \
-    ProductsStockSerializer, ProductsTrackingSerializer, \
-    ProductsTrackingHeaderSerializer, PurchaseOrderSerializer, \
-    ProductsProviderSerializer
+from .serializers import (ProductCategoryReducedSerializer, ProductCategorySerializer, ProductReducedSerializer, 
+                          ProductSerializer, ProductsProviderSerializer, ProductsStockReducedSerializer, 
+                          ProductsStockSerializer, ProductsTrackingHeaderReducedSerializer, 
+                          ProductsTrackingHeaderSerializer, ProductsTrackingReducedSerializer,
+                          ProductsTrackingSerializer, PurchaseOrderReducedSerializer, PurchaseOrderSerializer)
+
+from MultiServices.paginations import (ProviderInventoryListPagination, StandardResultsSetPaginationHigh,
+                                    StandardResultsSetPaginationLevelHighest, StandardResultsSetPaginationMedium)
 
 
-class StandardResultsSetPagination(PageNumberPagination):
-    """ Pagination for 10 records """
-
-    page_size = 10
-    page_size_query_param = 'page_size'
-    max_page_size = 10
-
-
-class StandardResultsSetPaginationMedium(PageNumberPagination):
-    """ Pagination for 20 records Level2 """
-
-    page_size = 20
-    page_size_query_param = 'page_size'
-    max_page_size = 20
-
-
-class StandardResultsSetPaginationHigh(PageNumberPagination):
-    """ Pagination for 50 records Level3 """
-
-    page_size = 50
-    page_size_query_param = 'page_size'
-    max_page_size = 50
-
-
-class StandardResultsSetPaginationLevelHighest(PageNumberPagination):
-    """ Pagination for 200 records Long """
-
-    page_size = 200
-    page_size_query_param = 'page_size'
-    max_page_size = 200
-
-
-class ProductList(generics.ListCreateAPIView):
-    """ Product list """
-
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
+class ProductViewSet(ModelViewSet):
+    queryset = Product.objects.select_related('company').select_related('category').select_related('stocks').all()
     pagination_class = StandardResultsSetPaginationHigh
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['id', 'description',
-                        'company', 'model', 'category_id', 'barcode']
+    filterset_fields = ['id', 'description', 'company', 'model', 'category_id', 'barcode']
     search_fields = ['description', 'barcode']
 
-    def delete(self, request, pk=None):
-        try:
-            product = Product.objects.get(pk=pk)
-            product.delete()
-        except Product.DoesNotExists:
-            return Response("Not Found", status=status.HTTP_404_NOT_FOUND)
-        except Exception:
-            return Response("Internal Error",
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        product = Product.objects.get(pk=pk)
-        serializer = ProductSerializer(product, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return ProductReducedSerializer
+        return ProductSerializer
 
 
-class ProductCategoryList(generics.ListCreateAPIView):
-    """ Product category list """
+class ProductOcurrencesViewSet(ModelViewSet):
+    queryset = Product.objects.select_related('company').select_related('category').select_related('stocks').all()
+    pagination_class = StandardResultsSetPaginationHigh
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['id', 'description', 'company', 'model', 'category_id', 'barcode']
+    search_fields = ['description', 'barcode']
 
-    queryset = ProductCategory.objects.all()
-    serializer_class = ProductCategorySerializer
+    def get_serializer_class(self):
+        products = Product.objects.all()
+        for prod in products:
+            tracking = ProductsTracking.objects.filter(product_id=prod.id, typeTracking='S').count()
+            prod.ocurrences = tracking
+            prod.save()
+
+        if self.request.method == 'PUT':
+            return ProductReducedSerializer
+        return ProductSerializer
+
+
+class ProductCategoryViewSet(ModelViewSet):
+    queryset = ProductCategory.objects.select_related('company').all()
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'description', 'company']
 
-    def delete(self, request, pk=None):
-        productCategory = ProductCategory.objects.get(pk=pk)
-        productCategory.delete()
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        productCategory = ProductCategory.objects.get(pk=pk)
-        serializer = ProductCategorySerializer(
-            productCategory, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return ProductCategoryReducedSerializer
+        return ProductCategorySerializer
 
 
-class ProductsStockList(generics.ListCreateAPIView):
-    """ Product stock list """
-
-    queryset = ProductsStock.objects.all()
-    serializer_class = ProductsStockSerializer
+class ProductsStockViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'put']
+    queryset = ProductsStock.objects.select_related('company').select_related('product').all()
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'company', 'product', 'modifiedUser']
+    filterset_fields = ['company', 'product', 'modifiedUser']
 
-    def delete(self, request, pk=None):
-        productsStock = ProductsStock.objects.get(pk=pk)
-        productsStock.delete()
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        productsStock = ProductsStock.objects.get(pk=pk)
-        serializer = ProductsStockSerializer(
-            productsStock, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return ProductsStockReducedSerializer
+        return ProductsStockSerializer
 
 
-class ProductsTrackingHeaderList(generics.ListCreateAPIView):
-    """ Products tracking header list """
-
-    queryset = ProductsTrackingHeader.objects.all()
-    serializer_class = ProductsTrackingHeaderSerializer
-    pagination_class = StandardResultsSetPagination
+class ProductsTrackingHeaderViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'put']
+    queryset = ProductsTrackingHeader.objects.select_related('company').select_related('provider').all()
+    pagination_class = ProviderInventoryListPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['id', 'company', 'provider',
-                        'ncf', 'docDate', 'createdUser', 'paid', 'reference']
+    filterset_fields = ['id', 'company', 'provider', 'ncf', 'docDate', 'createdUser', 'paid', 'reference']
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return ProductsTrackingHeaderReducedSerializer
+        return ProductsTrackingHeaderSerializer
 
     def get_queryset(self):
-        queryset = ProductsTrackingHeader.objects.all()
-
         provider_name = self.request.query_params.get('provider_name', None)
+        year = self.request.query_params.get('year', None)
+
         if provider_name is not None:
-            queryset = queryset.filter(
+            self.queryset = self.queryset.filter(
                 provider__firstName__contains=provider_name)
-        return queryset
-
-    def delete(self, request, pk=None):
-        productsTrackingHeader = ProductsTrackingHeader.objects.get(pk=pk)
-        productsTrackingHeader.delete()
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        productsTrackingHeader = ProductsTrackingHeader.objects.get(pk=pk)
-        serializer = ProductsTrackingHeaderSerializer(
-            productsTrackingHeader, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        if year is not None:
+            self.queryset = self.queryset.filter(
+                creationDate__year=year)
+    
+        return self.queryset
 
 
-class ProductsTrackingList(generics.ListCreateAPIView):
-    """ Products tracking list detail """
-
-    queryset = ProductsTracking.objects.all()
-    serializer_class = ProductsTrackingSerializer
+class ProductsTrackingViewSet(ModelViewSet):
+    queryset = ProductsTracking.objects.select_related('company').prefetch_related('product').prefetch_related('header').all()
     pagination_class = StandardResultsSetPaginationMedium
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['id', 'company', 'concept', 'header',
-                        'product', 'typeTracking', 'createdUser']
+    filterset_fields = ['id', 'company', 'concept', 'header', 'product', 'typeTracking', 'createdUser']
 
-    def delete(self, request, pk=None):
-        productsTracking = ProductsTracking.objects.get(pk=pk)
-        productsTracking.delete()
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        productsTracking = ProductsTracking.objects.get(pk=pk)
-        serializer = ProductsTrackingSerializer(
-            productsTracking, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return ProductsTrackingReducedSerializer
+        return ProductsTrackingSerializer
 
 
-class ProductsTrackingListLong(generics.ListCreateAPIView):
-    """ Products tracking list (with more items) """
-
-    queryset = ProductsTracking.objects.all()
+class ProductsTrackingListLong(ModelViewSet):
+    http_method_names = ['get']
+    queryset = ProductsTracking.objects.select_related('company').select_related('product').prefetch_related('header').all()
     serializer_class = ProductsTrackingSerializer
     pagination_class = StandardResultsSetPaginationLevelHighest
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['id', 'company', 'concept', 'header',
-                        'product', 'typeTracking', 'createdUser']
+    filterset_fields = ['id', 'company', 'concept', 'header', 'product', 'typeTracking', 'createdUser']
 
-    def delete(self, request, pk=None):
-        productsTracking = ProductsTracking.objects.get(pk=pk)
-        productsTracking.delete()
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        productsTracking = ProductsTracking.objects.get(pk=pk)
-        serializer = ProductsTrackingSerializer(
-            productsTracking, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class PurchaseOrderList(generics.ListCreateAPIView):
-    """ Purchase orders list """
-
-    queryset = PurchaseOrder.objects.all()
+   
+class PurchaseOrderViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'put']
+    queryset = PurchaseOrder.objects.select_related('company').select_related('product').all()
     serializer_class = PurchaseOrderSerializer
-    pagination_class = StandardResultsSetPagination
+    pagination_class = StandardResultsSetPaginationMedium
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'company', 'product', 'quantity', 'pending']
     search_fields = ['product__description', ]
 
-    def delete(self, request, pk=None):
-        purchaseOrder = PurchaseOrder.objects.get(pk=pk)
-        purchaseOrder.delete()
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        purchaseOrder = PurchaseOrder.objects.get(pk=pk)
-        serializer = PurchaseOrderSerializer(
-            purchaseOrder, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return PurchaseOrderReducedSerializer
+        return PurchaseOrderSerializer
 
 
-class ProductsProviderReport(generics.ListCreateAPIView):
-    """ Products provider report """
-
-    queryset = ProductsTracking.objects.all()
+class ProductsProviderReport(ModelViewSet):
+    queryset = ProductsTracking.objects.select_related('company').select_related('product').select_related('header').all()
     serializer_class = ProductsProviderSerializer
-    # pagination_class = StandardResultsSetPagination
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filter_backends = [SearchFilter, ]
     filterset_fields = ['id', 'product', 'product_id']
-    search_fields = ['product__description', ]
-
+    
     def get_queryset(self):
-        product_id = self.request.query_params.get
-        (
-            'product_id', None
-        )
+        product_id = self.request.query_params.get('product_id', None)
 
         if product_id is not None:
-            queryset = ProductsTracking.objects.all().order_by("-creationDate")
+            query = """
+                    select t.id, t.product_id, p.id provider_id, p.firstName,
+                        t.price, h.creationDate
+                            from products_productsTracking t
+                            inner join products_productsTrackingHeader h on h.id = t.header_id 
+                            inner join administration_provider p on p.id = h.provider_id
+                            where t.typeTracking = 'E' and t.product_id = {product_id}
+                            order by h.creationDate desc
+                    """.replace("{product_id}", product_id)
 
-        return queryset
+            self.queryset = ProductsTracking.objects.raw(query)
+        
+        return self.queryset

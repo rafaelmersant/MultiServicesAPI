@@ -1,23 +1,22 @@
-from django.conf.urls import url, include
+# from django.conf.urls import url, include
+import debug_toolbar
 from django.conf import settings
 from django.contrib import admin
 from rest_framework.authtoken import views
 from rest_framework_simplejwt import views as jwt_views
 
-from django.urls import path
-
+from django.urls import include, path, re_path
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-]
-
-urlpatterns += [
-    url(r'^api/v1/', include('administration.urls')),
-    url(r'^api/v1/', include('products.urls')),
-    url(r'^api/v1/', include('sales.urls')),
-    url(r'^api/v1/auth', include('rest_framework.urls')),
-    url(r'^api/v1/token/', jwt_views.TokenObtainPairView.as_view(),
+    re_path('admin/', admin.site.urls),
+    re_path(r'^api/v1/', include('administration.urls')),
+    re_path(r'^api/v1/', include('products.urls')),
+    re_path(r'^api/v1/', include('sales.urls')),
+    re_path(r'^api/v1/auth', include('rest_framework.urls')),
+    re_path(r'^api/v1/token/', jwt_views.TokenObtainPairView.as_view(),
         name='token_obtain_pair'),
-    url(r'^api/v1/token/refresh/',
+    re_path(r'^api/v1/token/refresh/',
         jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
+    path('__debug__/', include('debug_toolbar.urls')),
+
 ]

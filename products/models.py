@@ -40,21 +40,14 @@ class Product(models.Model):
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
     createdUser = models.EmailField(null=True, blank=True)
     minimumStock = models.IntegerField(default=0)
+    ocurrences = models.PositiveIntegerField(default=0)
     updated = models.BooleanField()
     objects = models.Manager()
 
     @property
     def quantity(self):
-        return ProductsStock.objects.get(product_id=self.id).quantityAvailable
-
-    @property
-    def ocurrences(self):
-        ocurrences = ProductsTracking.objects \
-            .filter(product_id=self.id) \
-            .filter(typeTracking='S')
-
-        return ocurrences.count()
-
+        return self.stocks.quantityAvailable
+   
     def __str__(self):
         return self.description
 
@@ -66,10 +59,8 @@ class ProductsTrackingHeader(models.Model):
     provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
     docDate = models.DateTimeField(blank=True)
     ncf = models.CharField(max_length=13, null=True, blank=True)
-    totalAmount = models.DecimalField(
-        max_digits=18, decimal_places=6, null=True)
-    itbis = models.DecimalField(
-        max_digits=18, decimal_places=6, null=True, blank=True)
+    totalAmount = models.DecimalField(max_digits=18, decimal_places=6, null=True)
+    itbis = models.DecimalField(max_digits=18, decimal_places=6, null=True, blank=True)
     reference = models.CharField(max_length=20, null=True, blank=True)
     paid = models.BooleanField(default=False)
     creationDate = models.DateTimeField(blank=True)
@@ -87,7 +78,7 @@ class ProductsTracking(models.Model):
         null=True,
         blank=True
     )
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="trackings")
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
 
     # S=Salida / E=Entrada
@@ -125,9 +116,7 @@ class ProductsTracking(models.Model):
 
 
 class ProductsStock(models.Model):
-    """ Products stock model. """
-
-    product = models.OneToOneField(Product, on_delete=models.CASCADE)
+    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name="stocks")
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     quantityAvailable = models.DecimalField(
         max_digits=18,

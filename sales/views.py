@@ -2,231 +2,213 @@
 
 # Django
 from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404
-from django.db.models import Max
 
 # Django REST framework
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework import generics, status
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
 
-# Models
-from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, \
-    InvoicesLeadHeader, InvoicesLeadDetail
+from MultiServices.paginations import InvoiceListPagination, StandardResultsSetPaginationHigh
 
 # Serializers
-from .serializers import InvoicesHeaderSerializer, InvoicesDetailSerializer, \
-    InvoicesSequenceSerializer, InvoicesLeadHeaderSerializer, \
-    InvoicesLeadDetailSerializer
+from . import serializers
+
+# Models
+from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, InvoicesLeadHeader, InvoicesLeadDetail
+
+class InvoicesHeaderViewSet(ModelViewSet):
+    queryset = InvoicesHeader.objects.select_related('company').select_related('customer').all()
+    serializer_class = serializers.InvoicesHeaderSerializer
+    pagination_class = InvoiceListPagination
+    filter_backends = [SearchFilter, OrderingFilter]
+    filterset_fields = ['id', 'company', 'company_id', 'customer', 'sequence', 'customer_id', 
+                        'paymentMethod', 'ncf', 'createdUser']
+    
+    def get_serializer_class(self):
+        sequence = self.request.query_params.get('sequence', None)
+        
+        if self.request.method == 'PUT' or self.request.method == 'POST':
+            return serializers.InvoicesHeaderUpdateSerializer
+        elif self.request.method == 'GET' and sequence is not None:
+            return serializers.InvoicesHeaderReducedSerializer
+        return serializers.InvoicesHeaderSerializer
+
+    def get_queryset(self):
+        sequence = self.request.query_params.get('sequence', None)
+        
+        if sequence is not None:
+            query = """
+                    select h.id, h.company_id, m.address company_address, m.rnc company_rnc, m.email company_email, 
+                                m.phoneNumber company_phoneNumber, customer_id, c.firstName customer_firstName, 
+                                c.lastName customer_lastName, c.identification customer_identification, 
+                                c.address customer_address, c.email customer_email, h.paymentMethod, h.ncf, h.createdUser, 
+                                h.creationDate, h.sequence, h.paid, h.printed, h.subtotal, h.itbis, h.discount, 
+                                h.reference, h.serverDate
+                        from sales_invoicesheader h
+                        inner join administration_customer c on c.id = h.customer_id
+                        inner join administration_company m on m.id = h.company_id
+                        where h.sequence = {sequence}
+                    """
+            if sequence is not None:
+                query = query.replace("{sequence}", sequence)
+            else:
+                query = query.replace("where h.sequence = {sequence}", "")
+           
+            return InvoicesHeader.objects.raw(query)
+        
+        return self.queryset
 
 
-class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'page_size'
-    max_page_size = 10
-
-
-class StandardResultsSetPagination2(PageNumberPagination):
-    page_size = 50
-    page_size_query_param = 'page_size'
-    max_page_size = 50
-
-
-class InvoicesHeaderList(generics.ListCreateAPIView):
-    """ Invoices header list data. """
-
-    queryset = InvoicesHeader.objects.all()
-    serializer_class = InvoicesHeaderSerializer
-    pagination_class = StandardResultsSetPagination
+class InvoicesHeaderSearchViewSet(ModelViewSet):
+    http_method_names = ['get']
+    queryset = InvoicesHeader.objects.select_related('company').select_related('customer').all()
+    serializer_class = serializers.InvoicesHeaderSerializer
+    pagination_class = InvoiceListPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['id', 'company', 'company_id', 'customer', 'sequence',
-                        'customer_id', 'paymentMethod', 'ncf', 'createdUser']
+    filterset_fields = ['id', 'company', 'company_id', 'customer', 'sequence', 'customer_id', 
+                         'paymentMethod', 'ncf', 'createdUser']
+    
 
-    def delete(self, request, pk=None):
-        try:
-            invoiceHeader = InvoicesHeader.objects.get(pk=pk)
-            invoiceHeader.delete()
-        except InvoicesHeader.DoesNotExist:
-            return Response("invoice header not found",
-                            status=status.HTTP_404_NOT_FOUND)
-        except:
-            return Response("Internal Server Error",
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        invoiceHeader = InvoicesHeader.objects.get(pk=pk)
-        serializer = InvoicesHeaderSerializer(invoiceHeader, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class InvoicesDetailList(generics.ListCreateAPIView):
-    """ Invoices details list related to an invoice header. """
-
-    queryset = InvoicesDetail.objects.all()
-    serializer_class = InvoicesDetailSerializer
+class InvoicesDetailViewSet(ModelViewSet):
+    queryset = InvoicesDetail.objects.select_related('product').select_related('invoice').all()
+    serializer_class = serializers.InvoicesDetailSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'invoice', 'invoice_id',
-                        'product', 'product_id', 'creationDate']
+    filterset_fields = ['id', 'invoice', 'invoice_id', 'product', 'product_id', 'creationDate']
 
-    def delete(self, request, pk=None):
-        try:
-            invoiceDetail = InvoicesDetail.objects.get(pk=pk)
-            invoiceDetail.delete()
-        except InvoicesDetail.DoesNotExist:
-            return Response("invoice detail not found",
-                            status=status.HTTP_404_NOT_FOUND)
-        except:
-            return Response("Internal Server Error",
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        invoiceDetail = InvoicesDetail.objects.get(pk=pk)
-        serializer = InvoicesDetailSerializer(invoiceDetail, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return serializers.InvoicesDetailReducedSerializer
+        return serializers.InvoicesDetailSerializer
 
 
-class InvoicesSequenceList(generics.ListCreateAPIView):
-    """ Invoices sequences list by companies.
-
-    Here will be saved the sequence for invoice by companies.
-    """
-
-    queryset = InvoicesSequence.objects.all()
-    serializer_class = InvoicesSequenceSerializer
+class InvoicesDetailReducedViewSet(ModelViewSet):
+    queryset = InvoicesDetail.objects.select_related('product').all()
+    serializer_class = serializers.InvoicesDetailReducedSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'company', 'company_id', 'sequence',
-                        'createdUser']
-
-    def delete(self, request, pk=None):
-        try:
-            invoiceSequence = InvoicesSequence.objects.get(pk=pk)
-            invoiceSequence.delete()
-        except InvoicesSequence.DoesNotExist:
-            return Response("invoice sequence not found",
-                            status=status.HTTP_404_NOT_FOUND)
-        except:
-            return Response("Internal Server Error",
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        invoiceSequence = InvoicesSequence.objects.get(pk=pk)
-        serializer = InvoicesSequenceSerializer(
-            invoiceSequence, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    filterset_fields = ['id', 'product', 'creationDate']
 
 
-class InvoicesHeaderListFull(generics.ListCreateAPIView):
-    """ Invoices header list full."""
+class InvoicesDetailSimpleViewSet(ModelViewSet):
+    http_method_names = ['get']
+    serializer_class = serializers.InvoicesDetailSimpleSerializer
+    filter_backends = [SearchFilter,]
+    filterset_fields = ['id', 'invoice_id', 'creationDate']
+    
+    def get_queryset(self):
+        invoice = self.request.query_params.get('invoice', None)
+       
+        query = """
+                select d.id, d.invoice_id, d.product_id, p.description as product_description, d.quantity, d.price, d.cost, d.itbis, d.discount
+                        from sales_invoicesdetail d
+                        inner join products_product p on p.id = d.product_id
+                        where d.invoice_id = {invoice_id}
+                        order by d.id
+                """
+        if invoice is not None:
+            query = query.replace("{invoice_id}", invoice)
+        else:
+            query = query.replace("where d.invoice_id = {invoice_id}", "")
+        
+        queryset = InvoicesDetail.objects.raw(query)
+        
+        return queryset
 
-    queryset = InvoicesHeader.objects.all()
-    serializer_class = InvoicesHeaderSerializer
+
+class InvoicesSequenceViewSet(ModelViewSet):
+    queryset = InvoicesSequence.objects.select_related('company').all()
+    serializer_class = serializers.InvoicesSequenceSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['id', 'company', 'company_id', 'sequence', 'createdUser']
+
+    def create(self, request, *args, **kwargs):
+        serializer = serializers.InvoicesSequenceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        sequence = serializer.save()
+        serializer = serializers.InvoicesSequenceSerializer(sequence)
+        return Response(serializer.data)
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return serializers.InvoicesSequenceReducedSerializer
+        return serializers.InvoicesSequenceSerializer
+
+
+class InvoicesHeaderListFull(ModelViewSet):
+    queryset = InvoicesHeader.objects.select_related('company').select_related('customer').all()
+    serializer_class = serializers.InvoicesHeaderSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['id', 'company', 'company_id', 'customer', 'sequence',
-                        'customer_id', 'paymentMethod', 'ncf', 'createdUser']
+    filterset_fields = ['id', 'company', 'company_id', 'customer', 'sequence',  'customer_id', 
+                        'paymentMethod', 'ncf', 'createdUser', 'creationDate']
+    
+    def get_queryset(self):
+        year = self.request.query_params.get("year", None)
 
-    def delete(self, request, pk=None):
-        try:
-            invoiceHeader = InvoicesHeader.objects.get(pk=pk)
-            invoiceHeader.delete()
-        except InvoicesHeader.DoesNotExist:
-            return Response("invoice header not found",
-                            status=status.HTTP_404_NOT_FOUND)
-        except:
-            return Response("Internal Server Error",
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if (year is not None):
+            self.queryset = self.queryset.filter(creationDate__year=year)
+        
+        return self.queryset
 
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        invoiceHeader = InvoicesHeader.objects.get(pk=pk)
-        serializer = InvoicesHeaderSerializer(invoiceHeader, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class InvoicesLeadsHeaderList(generics.ListCreateAPIView):
-    """ Invoices leads header list related to an invoice header. """
-
-    queryset = InvoicesLeadHeader.objects.all()
-    serializer_class = InvoicesLeadHeaderSerializer
-    pagination_class = StandardResultsSetPagination2
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    
+class InvoicesLeadsHeaderViewSet(ModelViewSet):
+    queryset = InvoicesLeadHeader.objects.prefetch_related('company').prefetch_related('invoice').all()
+    pagination_class = StandardResultsSetPaginationHigh
+    filter_backends = [SearchFilter,]
     filterset_fields = ['id', 'invoice', 'invoice_id', 'creationDate']
+    # permission_classes = [IsAuthenticated]
 
-    def delete(self, request, pk=None):
-        try:
-            InvoicesLeadHeader = InvoicesLeadHeader.objects.get(pk=pk)
-            InvoicesLeadHeader.delete()
-        except InvoicesLeadHeader.DoesNotExist:
-            return Response("invoice lead header not found",
-                            status=status.HTTP_404_NOT_FOUND)
-        except:
-            return Response("Internal Server Error",
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    def get_serializer_class(self):
+        company = self.request.query_params.get('company', None)
+        id = self.request.query_params.get('id', None)
 
-        return Response("deleted", status=status.HTTP_200_OK)
+        if self.request.method == 'PUT' or self.request.method == 'POST':
+            return serializers.InvoicesLeadHeaderReducedSerializer
+        elif self.request.method == 'GET' and (company is not None or id is not None):
+            return serializers.InvoicesLeadHeaderListSerializer
+        return serializers.InvoicesLeadHeaderSerializer
+    
+    def get_queryset(self):
+        company_id = self.request.query_params.get('company', None)
+        invoice_id = self.request.query_params.get('invoice', None)
+        id = self.request.query_params.get('id', None)
 
-    def put(self, request, pk, format=None):
-        InvoicesLeadHeader = InvoicesLeadHeader.objects.get(pk=pk)
-        serializer = InvoicesLeadHeaderSerializer(
-            InvoicesLeadHeader, data=request.data)
+        query = """
+                select h.id, c.firstName || ' ' || c.lastName customer, i.sequence invoice_no, 
+                        h.creationDate, h.company_id, c.identification customer_identification, 
+                        c.identificationType customer_identification_type
+                        from sales_invoicesLeadHeader h
+                        inner join sales_invoicesheader i on i.id = h.invoice_id
+                        inner join administration_customer c on c.id = i.customer_id
+                        where h.id = {id} and h.company_id = {company_id} and i.id = {invoice_sequence}
+                        order by h.creationDate desc
+                """
+        if company_id is not None:
+            query = query.replace("{company_id}", company_id)
+        else:
+            query = query.replace(" and h.company_id = {company_id}", "")
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if invoice_id is not None:
+            query = query.replace("{invoice_sequence}", invoice_id)
+        else:
+            query = query.replace("and i.id = {invoice_sequence}", "")
+        
+        if id is not None:
+            query = query.replace("{id}", id)
+        else:
+            query = query.replace("h.id = {id} and", "")
+
+        self.queryset = InvoicesLeadHeader.objects.raw(query)
+        
+        return self.queryset
 
 
-class InvoicesLeadsDetailList(generics.ListCreateAPIView):
-    """ Invoices leads details list related to an invoice lead header. """
-
-    queryset = InvoicesLeadDetail.objects.all()
-    serializer_class = InvoicesLeadDetailSerializer
+class InvoicesLeadsDetailViewSet(ModelViewSet):
+    queryset = InvoicesLeadDetail.objects.select_related('header').select_related('product').all()
+    serializer_class = serializers.InvoicesLeadDetailSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'header', 'header_id',
-                        'product', 'product_id', 'creationDate']
+    filterset_fields = ['id', 'header', 'header_id', 'product', 'product_id', 'creationDate']
 
-    def delete(self, request, pk=None):
-        try:
-            invoiceLeadDetail = InvoicesLeadDetail.objects.get(pk=pk)
-            invoiceLeadDetail.delete()
-        except invoiceLeadDetail.DoesNotExist:
-            return Response("invoice lead detail not found",
-                            status=status.HTTP_404_NOT_FOUND)
-        except:
-            return Response("Internal Server Error",
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response("deleted", status=status.HTTP_200_OK)
-
-    def put(self, request, pk, format=None):
-        invoiceLeadDetail = InvoicesLeadDetail.objects.get(pk=pk)
-        serializer = InvoicesLeadDetailSerializer(
-            invoiceLeadDetail, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return serializers.InvoicesLeadDetailReducedSerializer
+        return serializers.InvoicesLeadDetailSerializer
