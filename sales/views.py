@@ -28,7 +28,9 @@ class InvoicesHeaderViewSet(ModelViewSet):
     def get_serializer_class(self):
         sequence = self.request.query_params.get('sequence', None)
         
-        if self.request.method == 'PUT' or self.request.method == 'POST':
+        if self.request.method == 'POST':
+            return serializers.InvoicesHeaderCreateSerializer
+        elif self.request.method == 'PUT':
             return serializers.InvoicesHeaderUpdateSerializer
         elif self.request.method == 'GET' and sequence is not None:
             return serializers.InvoicesHeaderReducedSerializer
@@ -44,10 +46,11 @@ class InvoicesHeaderViewSet(ModelViewSet):
                                 c.lastName customer_lastName, c.identification customer_identification, 
                                 c.address customer_address, c.email customer_email, h.paymentMethod, h.ncf, h.createdUser, 
                                 h.creationDate, h.sequence, h.paid, h.printed, h.subtotal, h.itbis, h.discount, 
-                                h.reference, h.serverDate
+                                h.reference, h.serverDate, u.name created_user_name
                         from sales_invoicesheader h
                         inner join administration_customer c on c.id = h.customer_id
                         inner join administration_company m on m.id = h.company_id
+                        inner join administration_user u on u.email = h.createdUser
                         where h.sequence = {sequence}
                     """
             if sequence is not None:
