@@ -27,7 +27,7 @@ class InvoicesHeaderSerializer(serializers.ModelSerializer):
                   'createdUser', 'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'reference', 'serverDate')
 
 
-class InvoicesHeaderUpdateSerializer(serializers.ModelSerializer):
+class InvoicesHeaderCreateSerializer(serializers.ModelSerializer):
     company_id = serializers.IntegerField()
     customer_id = serializers.IntegerField()
 
@@ -35,6 +35,16 @@ class InvoicesHeaderUpdateSerializer(serializers.ModelSerializer):
         model = InvoicesHeader
         fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 
                   'createdUser', 'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'reference', 'serverDate')
+
+
+class InvoicesHeaderUpdateSerializer(serializers.ModelSerializer):
+    company_id = serializers.IntegerField()
+    customer_id = serializers.IntegerField()
+
+    class Meta:
+        model = InvoicesHeader
+        fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'sequence', 'paid', 
+        'printed', 'subtotal', 'itbis','discount', 'reference')
 
 
 class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):    
@@ -50,13 +60,15 @@ class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):
     customer_email = serializers.EmailField()
     customer_address = serializers.CharField(max_length=200)
     customer_identification = serializers.CharField(max_length=20)
+    
+    created_user_name = serializers.CharField(max_length=255)
 
     class Meta:
         model = InvoicesHeader
         fields = ('id', 'company_id', 'company_address', 'company_rnc', 'company_phoneNumber', 'company_email',
                   'customer_id', 'customer_firstName', 'customer_lastName', 'customer_email', 'customer_address',
                   'customer_identification', 'paymentMethod', 'sequence', 'ncf', 'paid', 'printed', 'subtotal', 'itbis',
-                  'discount', 'reference', 'serverDate', 'creationDate')
+                  'discount', 'reference', 'serverDate', 'creationDate', 'createdUser', 'created_user_name')
 
 
 class InvoicesDetailSerializer(serializers.ModelSerializer):
