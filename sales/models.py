@@ -93,12 +93,8 @@ class InvoicesSequence(models.Model):
 
 
 class QuotationsHeader(models.Model):
-    """ Quotations headers model. """
-
-    sequence = models.IntegerField()
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    paymentMethod = models.CharField(max_length=20)
     reference = models.CharField(
         max_length=50,
         blank=True
@@ -130,9 +126,7 @@ class QuotationsHeader(models.Model):
 
 
 class QuotationsDetail(models.Model):
-    """ Quotation details model. """
-
-    quotation = models.ForeignKey(QuotationsHeader, on_delete=models.CASCADE)
+    header = models.ForeignKey(QuotationsHeader, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.DecimalField(
         max_digits=18,

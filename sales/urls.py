@@ -20,7 +20,8 @@ router.register('invoicesSequences', views.InvoicesSequenceViewSet)
 router.register('invoicesHeadersFull', views.InvoicesHeaderListFull)
 router.register('invoicesLeadHeader', views.InvoicesLeadsHeaderViewSet, basename="leadHeaders")
 router.register('invoicesLeadDetail', views.InvoicesLeadsDetailViewSet)
-
+router.register('QuotationsHeaders', views.QuotationsHeaderViewSet)
+router.register('QuotationsDetails', views.QuotationsDetailViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -15,7 +15,7 @@ from MultiServices.paginations import InvoiceListPagination, StandardResultsSetP
 from . import serializers
 
 # Models
-from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, InvoicesLeadHeader, InvoicesLeadDetail
+from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, InvoicesLeadHeader, InvoicesLeadDetail, QuotationsDetail, QuotationsHeader
 
 class InvoicesHeaderViewSet(ModelViewSet):
     queryset = InvoicesHeader.objects.select_related('company').select_related('customer').all()
@@ -215,3 +215,28 @@ class InvoicesLeadsDetailViewSet(ModelViewSet):
         if self.request.method == 'PUT':
             return serializers.InvoicesLeadDetailReducedSerializer
         return serializers.InvoicesLeadDetailSerializer
+
+
+class QuotationsHeaderViewSet(ModelViewSet):
+    queryset = QuotationsHeader.objects.prefetch_related('company').all()
+    pagination_class = StandardResultsSetPaginationHigh
+    filter_backends = [DjangoFilterBackend, SearchFilter,]
+    filterset_fields = ['id', 'header', 'header_id', 'creationDate']
+    # permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT' or self.request.method == 'POST':
+            return serializers.QuotationsHeaderReducedSerializer
+        return serializers.QuotationsHeaderSerializer
+  
+
+class QuotationsDetailViewSet(ModelViewSet):
+    queryset = QuotationsDetail.objects.select_related('header').select_related('product').all()
+    serializer_class = serializers.QuotationsDetailSerializer
+    filter_backends = [DjangoFilterBackend,]
+    filterset_fields = ['id', 'header', 'header_id', 'product', 'product_id', 'creationDate']
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT' or self.request.method == 'POST':
+            return serializers.QuotationsDetailReducedSerializer
+        return serializers.QuotationsDetailSerializer

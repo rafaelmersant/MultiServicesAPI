@@ -184,3 +184,47 @@ class InvoicesLeadDetailReducedSerializer(serializers.ModelSerializer):
     class Meta:
         model = InvoicesLeadDetail
         fields = ('id', 'header_id', 'product_id', 'quantity', 'creationDate')
+
+
+# QuotationsHeader --> Cotizaciones
+class QuotationsHeaderSerializer(serializers.ModelSerializer):
+    company = CompanySerializer(read_only=True)
+    customer = CustomerReducedSerializer(read_only=True)
+
+    class Meta:
+        model = QuotationsHeader
+        fields = ('id', 'company', 'company_id', 'customer', 'customer_id', 'reference', 'printed',
+                  'subtotal', 'discount', 'itbis', 'creationDate', 'createdUser', 'serverDate')
+
+
+class QuotationsHeaderReducedSerializer(serializers.ModelSerializer):
+    company_id = serializers.IntegerField()
+    customer_id = serializers.IntegerField()
+
+    class Meta:
+        model = QuotationsHeader
+        fields = ('id', 'company_id', 'customer_id', 'reference', 'printed', 'subtotal', 'discount',
+                  'itbis', 'creationDate', 'createdUser', 'serverDate')
+
+
+# QuotationsDetail --> Cotizaciones
+class QuotationsDetailSerializer(serializers.ModelSerializer):
+    header = QuotationsHeaderReducedSerializer(read_only=True)
+    header_id = serializers.IntegerField(write_only=True)
+    product = ProductReducedSerializer(read_only=True)
+    product_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = QuotationsDetail
+        fields = ('id', 'header', 'header_id', 'product', 'product_id', 'quantity', 'price',
+                  'cost', 'discount', 'itbis', 'creationDate')
+
+
+class QuotationsDetailReducedSerializer(serializers.ModelSerializer):
+    header_id = serializers.IntegerField()
+    product_id = serializers.IntegerField()
+
+    class Meta:
+        model = QuotationsDetail
+        fields = ('id', 'header_id', 'product_id', 'quantity', 'price',
+                  'cost', 'discount', 'itbis', 'creationDate')
