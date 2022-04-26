@@ -221,7 +221,7 @@ class QuotationsHeaderViewSet(ModelViewSet):
     queryset = QuotationsHeader.objects.prefetch_related('company').all()
     pagination_class = StandardResultsSetPaginationHigh
     filter_backends = [DjangoFilterBackend, SearchFilter,]
-    filterset_fields = ['id', 'header', 'header_id', 'creationDate']
+    filterset_fields = ['id', 'customer', 'creationDate']
     # permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
