@@ -37,8 +37,14 @@ class InvoicesHeaderViewSet(ModelViewSet):
         return serializers.InvoicesHeaderSerializer
 
     def get_queryset(self):
+        start_date = self.request.query_params.get('start_date', None)
+        end_date = self.request.query_params.get('end_date', None)
+
+        if start_date is not None and end_date is not None:
+            self.queryset = self.queryset.filter(creationDate__date__gte=start_date, creationDate__date__lte=end_date)
+
         sequence = self.request.query_params.get('sequence', None)
-        
+
         if sequence is not None:
             query = """
                     select h.id, h.company_id, m.address company_address, m.rnc company_rnc, m.email company_email, 
