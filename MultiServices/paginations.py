@@ -4,8 +4,13 @@ from rest_framework.pagination import PageNumberPagination
 class InvoiceListPagination(PageNumberPagination):
     def get_page_size(self, request):
         customer = request.query_params.get('customer', None)
-        if customer is not None:
-            return 9000
+        start_date = request.query_params.get('start_date', None)
+        end_date = request.query_params.get('end_date', None)
+
+        if customer is not None or \
+            start_date is not None or \
+            end_date is not None:
+            return 9999999
         else:
             return 10
 

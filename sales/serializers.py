@@ -46,7 +46,7 @@ class InvoicesHeaderUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = InvoicesHeader
         fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'sequence', 'paid', 
-        'printed', 'subtotal', 'itbis','discount', 'reference', 'invoiceTyoe', 'invoiceStatus')
+        'printed', 'subtotal', 'itbis','discount', 'reference', 'invoiceType', 'invoiceStatus')
 
 
 class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):    
