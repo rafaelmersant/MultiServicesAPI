@@ -14,7 +14,9 @@ class InvoicesHeader(models.Model):
     sequence = models.IntegerField()
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    paymentMethod = models.CharField(max_length=20)
+    paymentMethod = models.CharField(max_length=20) # Transferencia / Credito
+    invoiceType = models.CharField(max_length=20, null=True, blank=True) # Credito / Contado
+    invoiceStatus = models.CharField(max_length=10, default="")
     ncf = models.CharField(
         max_length=13,
         null=True,

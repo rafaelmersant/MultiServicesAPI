@@ -24,7 +24,8 @@ class InvoicesHeaderSerializer(serializers.ModelSerializer):
     class Meta:
         model = InvoicesHeader
         fields = ('id', 'company', 'company_id', 'customer', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 
-                  'createdUser', 'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'reference', 'serverDate')
+                  'createdUser', 'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'reference', 'serverDate',
+                  'invoiceType', 'invoiceStatus')
 
 
 class InvoicesHeaderCreateSerializer(serializers.ModelSerializer):
@@ -33,8 +34,9 @@ class InvoicesHeaderCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InvoicesHeader
-        fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 
-                  'createdUser', 'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'reference', 'serverDate')
+        fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 'createdUser', 
+        'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'reference', 'serverDate',
+        'invoiceType', 'invoiceStatus')
 
 
 class InvoicesHeaderUpdateSerializer(serializers.ModelSerializer):
@@ -44,7 +46,7 @@ class InvoicesHeaderUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = InvoicesHeader
         fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'sequence', 'paid', 
-        'printed', 'subtotal', 'itbis','discount', 'reference')
+        'printed', 'subtotal', 'itbis','discount', 'reference', 'invoiceTyoe', 'invoiceStatus')
 
 
 class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):    
@@ -68,7 +70,8 @@ class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):
         fields = ('id', 'company_id', 'company_address', 'company_rnc', 'company_phoneNumber', 'company_email',
                   'customer_id', 'customer_firstName', 'customer_lastName', 'customer_email', 'customer_address',
                   'customer_identification', 'paymentMethod', 'sequence', 'ncf', 'paid', 'printed', 'subtotal', 'itbis',
-                  'discount', 'reference', 'serverDate', 'creationDate', 'createdUser', 'created_user_name')
+                  'discount', 'reference', 'serverDate', 'creationDate', 'createdUser', 'created_user_name',
+                  'invoiceType', 'invoiceStatus')
 
 
 class InvoicesDetailSerializer(serializers.ModelSerializer):
