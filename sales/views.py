@@ -275,3 +275,25 @@ def cancel_invoice(request, invoice):
             return Response({"message": f"La factura #{invoice} no fue encontrada, favor verificar."})
 
     return Response({f"message": f"Factura #{invoice} anulada con exito!"})
+
+
+class EmployeeSalesViewSet(ModelViewSet):
+    http_method_names = ['get']
+    serializer_class = serializers.InvoicesEmployeeSalesSerializer
+
+    def get_queryset(self):
+       start_date = self.request.query_params.get('start_date', None)
+       end_date = self.request.query_params.get('end_date', None)
+
+       if start_date is not None and end_date is not None:
+           query = """
+                    select 
+                        u.id, u.name createdUser, sum(h.subtotal) subtotal, sum(h.itbis) itbis, 
+                        sum(h.cost) cost, sum(h.discount) discount
+                    from sales_invoicesheader h
+                    inner join administration_user u on u.email = h.createdUser
+                    where h.creationDate between '#startDate#' and '#endDate#'
+                    group by u.id, u.name
+                    """.replace("#startDate#", start_date).replace("#endDate#", end_date)
+
+           return InvoicesHeader.objects.raw(query)
