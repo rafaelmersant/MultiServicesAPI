@@ -1,9 +1,11 @@
 """ Sales views. """
 
 # Django
+from msilib import sequence
 from django_filters.rest_framework import DjangoFilterBackend
 
 # Django REST framework
+from rest_framework.decorators import api_view
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
@@ -51,7 +53,7 @@ class InvoicesHeaderViewSet(ModelViewSet):
                                 m.phoneNumber company_phoneNumber, customer_id, c.firstName customer_firstName, 
                                 c.lastName customer_lastName, c.identification customer_identification, 
                                 c.address customer_address, c.email customer_email, h.paymentMethod, h.ncf, h.createdUser, 
-                                h.creationDate, h.sequence, h.paid, h.printed, h.subtotal, h.itbis, h.discount, 
+                                h.creationDate, h.sequence, h.paid, h.printed, h.subtotal, h.itbis, h.discount, h.cost,
                                 h.reference, h.serverDate, h.invoiceType, h.invoiceStatus, u.name created_user_name
                         from sales_invoicesheader h
                         inner join administration_customer c on c.id = h.customer_id
@@ -246,3 +248,30 @@ class QuotationsDetailViewSet(ModelViewSet):
         if self.request.method == 'PUT' or self.request.method == 'POST':
             return serializers.QuotationsDetailReducedSerializer
         return serializers.QuotationsDetailSerializer
+
+
+@api_view(['GET','POST'])
+def cancel_invoice(request, invoice):
+    if request.method == 'POST':
+        try:
+            invoice_header = InvoicesHeader.objects.get(sequence=invoice)
+            invoice_header.subtotal = 0
+            invoice_header.discount = 0
+            invoice_header.itbis = 0
+            invoice_header.cost = 0
+            invoice_header.paid = True
+            invoice_header.invoiceStatus = 'ANULADA'
+            invoice_header.save()
+
+            invoice_details = InvoicesDetail.objects.filter(invoice__id=invoice_header.id)
+            for detail in invoice_details:
+                detail.price = 0
+                detail.discount = 0
+                detail.cost = 0
+                detail.itbis = 0
+                detail.save()
+
+        except InvoicesHeader.DoesNotExist:
+            return Response({"message": f"La factura #{invoice} no fue encontrada, favor verificar."})
+
+    return Response({f"message": f"Factura #{invoice} anulada con exito!"})

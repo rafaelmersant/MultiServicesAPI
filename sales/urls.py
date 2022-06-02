@@ -25,4 +25,5 @@ router.register('quotationsDetails', views.QuotationsDetailViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('cancelInvoice/<int:invoice>', views.cancel_invoice)
 ]

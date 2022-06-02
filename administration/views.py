@@ -14,6 +14,7 @@ from . import serializers
 
 # Others
 import json
+import hashlib
 
 # Models
 from .models import Company, User, Customer, FiscalGov, Provider
@@ -52,7 +53,7 @@ class UserLogin(generics.ListCreateAPIView):
             body_unicode = request.body.decode('utf-8')
             body = json.loads(body_unicode)
             email = body['email']
-            password = body['password']
+            password = hashlib.md5(body['password'].encode()).hexdigest()
 
             user = User.objects.filter(email=email, password=password)
 
