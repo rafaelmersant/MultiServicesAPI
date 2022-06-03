@@ -74,6 +74,14 @@ class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):
                   'invoiceType', 'invoiceStatus')
 
 
+class InvoicesEmployeeSalesSerializer(serializers.Serializer):
+    subtotal = serializers.DecimalField(max_digits=18, decimal_places=6, default=0)
+    itbis = serializers.DecimalField(max_digits=18, decimal_places=6, default=0)
+    cost = serializers.DecimalField(max_digits=18, decimal_places=6, default=0)
+    discount = serializers.DecimalField(max_digits=18, decimal_places=6, default=0)
+    createdUser = serializers.CharField(max_length=255)
+
+
 class InvoicesDetailSerializer(serializers.ModelSerializer):
     invoice = InvoicesHeaderUpdateSerializer(many=False, read_only=True)
     invoice_id = serializers.IntegerField(write_only=True)
