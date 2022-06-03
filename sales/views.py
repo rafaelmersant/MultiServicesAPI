@@ -250,6 +250,29 @@ class QuotationsDetailViewSet(ModelViewSet):
         return serializers.QuotationsDetailSerializer
 
 
+class InvoicesCustomerViewSet(ModelViewSet):
+    http_method_names = ['get']
+    serializer_class = serializers.InvoicesCustomerSerializer
+
+    def get_queryset(self):
+       start_date = self.request.query_params.get('start_date', None)
+       end_date = self.request.query_params.get('end_date', None)
+
+       if start_date is not None and end_date is not None:
+           query = """
+                    select 
+                        c.id, c.firstName || ' ' || c.lastName customer_name, sum(h.subtotal) subtotal, sum(h.itbis) itbis, 
+                        sum(h.cost) cost, sum(h.discount) discount
+                    from sales_invoicesheader h
+                    inner join administration_customer c on c.id = h.customer_id
+                    where h.creationDate between '#startDate#' and '#endDate#'
+                    group by c.id, c.firstName || ' ' || c.lastName
+                    order by sum(h.subtotal) desc
+                    """.replace("#startDate#", start_date).replace("#endDate#", end_date)
+
+           return InvoicesHeader.objects.raw(query)
+
+
 @api_view(['GET','POST'])
 def cancel_invoice(request, invoice):
     if request.method == 'POST':

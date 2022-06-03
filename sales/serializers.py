@@ -231,3 +231,12 @@ class QuotationsDetailReducedSerializer(serializers.ModelSerializer):
         model = QuotationsDetail
         fields = ('id', 'header_id', 'product_id', 'quantity', 'price',
                   'cost', 'discount', 'itbis', 'creationDate')
+
+
+
+class InvoicesCustomerSerializer(serializers.Serializer):
+    subtotal = serializers.DecimalField(max_digits=18, decimal_places=6, default=0)
+    itbis = serializers.DecimalField(max_digits=18, decimal_places=6, default=0)
+    cost = serializers.DecimalField(max_digits=18, decimal_places=6, default=0)
+    discount = serializers.DecimalField(max_digits=18, decimal_places=6, default=0)
+    customer_name = serializers.CharField(max_length=255)
