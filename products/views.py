@@ -155,7 +155,7 @@ class ProductsProviderReport(ModelViewSet):
 
         if product_id is not None:
             query = """
-                    select t.id, t.product_id, p.id provider_id, p.firstName,
+                    select t.id, p.firstName,
                         t.price, h.creationDate
                             from products_productsTracking t
                             inner join products_productsTrackingHeader h on h.id = t.header_id 
