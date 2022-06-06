@@ -151,7 +151,7 @@ class ProductsProviderSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     # provider_id = serializers.IntegerField()
     # product_id = serializers.IntegerField()
-    firstName = serializers.CharField()
+    firstname = serializers.CharField()
     price = serializers.DecimalField(max_digits=10, decimal_places=2)
     creationDate = serializers.DateTimeField()
 
