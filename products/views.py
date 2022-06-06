@@ -145,7 +145,7 @@ class PurchaseOrderViewSet(ModelViewSet):
 
 class ProductsProviderReport(ModelViewSet):
     queryset = ProductsTracking.objects.select_related('company')\
-        .select_related('product').select_related('header').all().order_by('id')
+        .select_related('product').select_related('header').all().order_by('t.id')
     serializer_class = ProductsProviderSerializer
     filter_backends = [SearchFilter, ]
     filterset_fields = ['id', 'product', 'product_id']
