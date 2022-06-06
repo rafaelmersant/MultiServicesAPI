@@ -1,7 +1,6 @@
 """ Sales views. """
 
 # Django
-from msilib import sequence
 from django_filters.rest_framework import DjangoFilterBackend
 
 # Django REST framework
