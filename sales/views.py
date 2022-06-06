@@ -187,7 +187,7 @@ class InvoicesLeadsHeaderViewSet(ModelViewSet):
                 select h.id, c.firstName || ' ' || c.lastName customer, i.sequence invoice_no, 
                         h.creationDate, h.company_id, c.identification customer_identification, 
                         c.identificationType customer_identification_type
-                        from sales_invoicesLeadHeader h
+                        from sales_invoicesleadheader h
                         inner join sales_invoicesheader i on i.id = h.invoice_id
                         inner join administration_customer c on c.id = i.customer_id
                         where h.id = {id} and h.company_id = {company_id} and i.id = {invoice_sequence}
