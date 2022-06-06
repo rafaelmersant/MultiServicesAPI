@@ -44,6 +44,9 @@ class Product(models.Model):
     updated = models.BooleanField()
     objects = models.Manager()
 
+    class Meta:
+        ordering = ['id',]
+        
     @property
     def quantity(self):
         return self.stocks.quantityAvailable

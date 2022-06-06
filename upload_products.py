@@ -16,8 +16,8 @@ def add_new_product(description, price, cost):
     try:
         product = Product()
         product.description = description
-        product.price = price
-        product.cost = cost
+        product.price = price if len(price) > 0 else 0
+        product.cost = cost if len(cost) > 0 else 0
         product.itbis = 0
         product.category = ProductCategory.objects.filter(description='GENERICA')
         product.company = Company.objects.get(pk=14)

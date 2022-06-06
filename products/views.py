@@ -26,7 +26,7 @@ from MultiServices.paginations import (ProviderInventoryListPagination, Standard
 
 class ProductViewSet(ModelViewSet):
     queryset = Product.objects.select_related('company') \
-        .select_related('category').select_related('stocks').all().order_by('id')
+        .select_related('category').select_related('stocks').all()
     pagination_class = StandardResultsSetPaginationHigh
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'description', 'company', 'model', 'category_id', 'barcode']
