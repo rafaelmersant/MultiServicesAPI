@@ -145,7 +145,7 @@ class PurchaseOrderViewSet(ModelViewSet):
 
 class ProductsProviderReport(ModelViewSet):
     queryset = ProductsTracking.objects.select_related('company')\
-        .select_related('product').select_related('header').all().order_by('t.id')
+        .select_related('product').select_related('header').all()
     serializer_class = ProductsProviderSerializer
     filter_backends = [SearchFilter, ]
     filterset_fields = ['id', 'product', 'product_id']
@@ -155,10 +155,10 @@ class ProductsProviderReport(ModelViewSet):
 
         if product_id is not None:
             query = """
-                    select t.id, p.firstName,
+                    select t.id, t.product_id, p.id provider_id, p.firstName,
                         t.price, h.creationDate
-                            from products_productstracking t
-                            inner join products_productstrackingheader h on h.id = t.header_id 
+                            from products_productsTracking t
+                            inner join products_productsTrackingHeader h on h.id = t.header_id 
                             inner join administration_provider p on p.id = h.provider_id
                             where t.typeTracking = 'E' and t.product_id = {product_id}
                             order by h.creationDate desc
