@@ -42,6 +42,8 @@ class Product(models.Model):
     minimumStock = models.IntegerField(default=0)
     ocurrences = models.PositiveIntegerField(default=0)
     updated = models.BooleanField()
+    discount_max = models.DecimalField(
+        max_digits=18, decimal_places=6, null=True, blank=True)
     objects = models.Manager()
 
     @property
