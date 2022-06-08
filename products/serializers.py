@@ -39,7 +39,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = ('id', 'company', 'company_id', 'description', 'descriptionLong', 'price', 'cost', 
                   'itbis', 'category', 'category_id', 'barcode', 'measure', 'model', 'creationDate', 
-                  'createdUser', 'minimumStock', 'quantity', 'updated', 'ocurrences')
+                  'createdUser', 'minimumStock', 'quantity', 'updated', 'ocurrences', 'discount_max')
 
 
 class ProductReducedSerializer(serializers.ModelSerializer):
@@ -50,7 +50,7 @@ class ProductReducedSerializer(serializers.ModelSerializer):
         model = Product
         fields = ('id', 'company_id', 'description', 'descriptionLong', 'price', 'cost', 
                   'itbis', 'category_id', 'barcode', 'measure', 'model', 'creationDate', 
-                  'createdUser', 'minimumStock', 'updated')
+                  'createdUser', 'minimumStock', 'updated', 'discount_max')
     
 
 class ProductsStockSerializer(serializers.ModelSerializer):
