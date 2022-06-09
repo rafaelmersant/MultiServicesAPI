@@ -24,6 +24,7 @@ router.register('quotationsHeaders', views.QuotationsHeaderViewSet)
 router.register('quotationsDetails', views.QuotationsDetailViewSet)
 router.register('invoicesCustomers', views.InvoicesCustomerViewSet, basename="invoicesCustomers")
 router.register('employeesSales', views.EmployeeSalesViewSet, basename="employeesSales")
+router.register('points', views.PointsViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

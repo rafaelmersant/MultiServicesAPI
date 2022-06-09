@@ -1,13 +1,14 @@
 """ Sales serializers. """
 
 # Django REST framework
+from logging import exception
 from rest_framework import serializers
 
-from administration.models import Company
+from administration.models import Customer
 
 # Models
 from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, \
-    InvoicesLeadHeader, InvoicesLeadDetail, QuotationsHeader, QuotationsDetail
+    InvoicesLeadHeader, InvoicesLeadDetail, QuotationsHeader, QuotationsDetail, Points
 
 # Serializers
 from products.serializers import CompanySerializer, ProductReducedSerializer, ProductSerializer
@@ -26,7 +27,7 @@ class InvoicesHeaderSerializer(serializers.ModelSerializer):
         fields = ('id', 'company', 'company_id', 'customer', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 
                   'createdUser', 'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'cost', 'reference',
                   'serverDate', 'invoiceType', 'invoiceStatus')
-
+   
 
 class InvoicesHeaderCreateSerializer(serializers.ModelSerializer):
     company_id = serializers.IntegerField()
@@ -37,6 +38,21 @@ class InvoicesHeaderCreateSerializer(serializers.ModelSerializer):
         fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 'createdUser', 
         'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'cost', 'reference', 'serverDate',
         'invoiceType', 'invoiceStatus')
+        
+    def create(self, validated_data):
+        subtotal = validated_data['subtotal']
+        invoice = InvoicesHeader.objects.create(**validated_data)
+                                
+        points = Points()
+        points.customer = Customer.objects.get(pk=validated_data['customer_id'])
+        points.invoice = InvoicesHeader.objects.get(pk=invoice.id) 
+        points.invoice_amount = subtotal
+        points.total_points = subtotal // 125
+        points.type = "E"
+        points.createdUser = validated_data['createdUser']
+        points.save()
+            
+        return invoice
 
 
 class InvoicesHeaderUpdateSerializer(serializers.ModelSerializer):
@@ -47,6 +63,17 @@ class InvoicesHeaderUpdateSerializer(serializers.ModelSerializer):
         model = InvoicesHeader
         fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'sequence', 'paid', 
         'printed', 'subtotal', 'itbis','discount', 'cost', 'reference', 'invoiceType', 'invoiceStatus')
+    
+    def update(self, instance, validated_data):
+        points = Points.objects.filter(invoice__id=instance.id)
+       
+        if points.exists():
+            _points = Points.objects.get(id=points[0].id)
+            _points.invoice_amount = validated_data['subtotal']
+            _points.total_points = validated_data['subtotal'] // 125
+            _points.save()
+        
+        return super().update(instance, validated_data)
 
 
 class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):    
@@ -71,6 +98,17 @@ class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):
                   'customer_id', 'customer_firstName', 'customer_lastName', 'customer_email', 'customer_address',
                   'customer_identification', 'paymentMethod', 'sequence', 'ncf', 'paid', 'printed', 'subtotal', 'itbis',
                   'discount', 'cost', 'reference', 'serverDate', 'creationDate', 'createdUser', 'created_user_name',
+                  'invoiceType', 'invoiceStatus')
+
+
+class InvoicesHeaderMinimumSerializer(serializers.ModelSerializer):    
+    company_id = serializers.IntegerField()
+    customer_id = serializers.IntegerField()
+    
+    class Meta:
+        model = InvoicesHeader
+        fields = ('id', 'company_id', 'customer_id', 'paymentMethod', 'sequence', 'ncf', 'paid', 'printed',
+                  'subtotal', 'itbis', 'discount', 'cost', 'reference', 'serverDate', 'creationDate', 'createdUser',
                   'invoiceType', 'invoiceStatus')
 
 
@@ -248,3 +286,13 @@ class InvoicesCustomerSerializer(serializers.Serializer):
     cost = serializers.DecimalField(max_digits=18, decimal_places=6, default=0)
     discount = serializers.DecimalField(max_digits=18, decimal_places=6, default=0)
     customer_name = serializers.CharField(max_length=255)
+
+
+class PointsSerializer(serializers.ModelSerializer):
+    customer = CustomerReducedSerializer(many=False, read_only=True)
+    invoice = InvoicesHeaderMinimumSerializer(many=False, read_only=True)
+
+    class Meta:
+        model = Points
+        fields = ('id', 'customer', 'invoice', 'invoice_amount', 'total_points', 'type',
+                  'reference', 'creationDate', 'createdUser')

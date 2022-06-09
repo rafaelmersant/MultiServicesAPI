@@ -16,7 +16,8 @@ from MultiServices.paginations import InvoiceListPagination, StandardResultsSetP
 from . import serializers
 
 # Models
-from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, InvoicesLeadHeader, InvoicesLeadDetail, QuotationsDetail, QuotationsHeader
+from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, InvoicesLeadHeader,  \
+    InvoicesLeadDetail, QuotationsDetail, QuotationsHeader, Points
 
 class InvoicesHeaderViewSet(ModelViewSet):
     queryset = InvoicesHeader.objects.select_related('company').select_related('customer').all()
@@ -319,3 +320,11 @@ class EmployeeSalesViewSet(ModelViewSet):
                     """.replace("#startDate#", start_date).replace("#endDate#", end_date)
 
            return InvoicesHeader.objects.raw(query)
+
+
+class PointsViewSet(ModelViewSet):
+    queryset = Points.objects.select_related('customer').select_related("invoice").all()
+    serializer_class = serializers.PointsSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['id', 'customer', 'invoice',]
+    search_fields = ['customer', 'invoice']

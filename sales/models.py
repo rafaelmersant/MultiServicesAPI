@@ -14,7 +14,7 @@ class InvoicesHeader(models.Model):
     sequence = models.IntegerField(unique=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    paymentMethod = models.CharField(max_length=20, null=True, blank=True) # Transferencia / Credito
+    paymentMethod = models.CharField(max_length=20, null=True, blank=True) # Transferencia / Credito / Puntos Superavit
     invoiceType = models.CharField(max_length=20, null=True, blank=True) # Credito / Contado
     invoiceStatus = models.CharField(max_length=10, blank=True, default="") # Anulada or Empty
     ncf = models.CharField(
@@ -208,3 +208,24 @@ class InvoicesLeadDetail(models.Model):
     )
     creationDate = models.DateTimeField(auto_now_add=True, blank=True)
     objects = models.Manager()
+
+
+class Points(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    invoice = models.ForeignKey(InvoicesHeader, on_delete=models.CASCADE)
+    invoice_amount = models.DecimalField(
+        max_digits=18, decimal_places=6, null=True, blank=True)
+    total_points = models.DecimalField(
+        max_digits=18, decimal_places=6, null=True, blank=True)
+    type = models.CharField(max_length=1) #E = Entry / R = Redeemed
+    reference = models.CharField(max_length=200)
+    creationDate = models.DateTimeField(
+        auto_now_add=True,
+        blank=True,
+        null=True
+    )
+    createdUser = models.EmailField(null=True, blank=True)
+    objects = models.Manager()
+
+    def __str__(self) -> str:
+        return f'Total Points: {self.total_points}'
