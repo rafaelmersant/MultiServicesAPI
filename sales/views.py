@@ -2,6 +2,8 @@
 
 # Django
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Sum, DecimalField
+from django.db.models.functions import Coalesce
 
 # Django REST framework
 from rest_framework.decorators import api_view
@@ -293,6 +295,12 @@ def cancel_invoice(request, invoice):
                 detail.cost = 0
                 detail.itbis = 0
                 detail.save()
+            
+            points = Points.objects.filter(invoice__id=invoice_header.id)
+            for point in points:
+                point.total_points = 0
+                point.reference = "Factura Anulada"
+                point.save()
 
         except InvoicesHeader.DoesNotExist:
             return Response({"message": f"La factura #{invoice} no fue encontrada, favor verificar."})
@@ -322,9 +330,19 @@ class EmployeeSalesViewSet(ModelViewSet):
            return InvoicesHeader.objects.raw(query)
 
 
+@api_view(['GET'])
+def points_available(request, customer):
+    if request.method == 'GET':
+        total_points = Points.objects \
+                        .filter(customer__id=customer) \
+                        .aggregate(total_points=Coalesce(Sum('total_points'), 0, output_field=DecimalField()))
+        return Response(total_points)
+    
+        
 class PointsViewSet(ModelViewSet):
     queryset = Points.objects.select_related('customer').select_related("invoice").all()
     serializer_class = serializers.PointsSerializer
+    pagination_class = InvoiceListPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'customer', 'invoice',]
     search_fields = ['customer', 'invoice']

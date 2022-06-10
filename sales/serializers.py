@@ -40,15 +40,21 @@ class InvoicesHeaderCreateSerializer(serializers.ModelSerializer):
         'invoiceType', 'invoiceStatus')
         
     def create(self, validated_data):
-        subtotal = validated_data['subtotal']
+        superavit_points = 125
+        points_type = "E"
+        total_points = validated_data['subtotal'] // superavit_points
         invoice = InvoicesHeader.objects.create(**validated_data)
-                                
+        
+        if (invoice.paymentMethod == 'POINTS'):
+            points_type = "R"
+            total_points = validated_data['discount'] * -1
+
         points = Points()
         points.customer = Customer.objects.get(pk=validated_data['customer_id'])
         points.invoice = InvoicesHeader.objects.get(pk=invoice.id) 
-        points.invoice_amount = subtotal
-        points.total_points = subtotal // 125
-        points.type = "E"
+        points.invoice_amount = invoice.subtotal
+        points.total_points = total_points 
+        points.type = points_type
         points.createdUser = validated_data['createdUser']
         points.save()
             

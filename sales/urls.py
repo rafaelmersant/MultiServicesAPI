@@ -28,5 +28,6 @@ router.register('points', views.PointsViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('cancelInvoice/<int:invoice>', views.cancel_invoice)
+    path('cancelInvoice/<int:invoice>', views.cancel_invoice),
+    path('totalpoints/<int:customer>', views.points_available)
 ]
