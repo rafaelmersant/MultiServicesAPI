@@ -157,8 +157,8 @@ class ProductsProviderReport(ModelViewSet):
             query = """
                     select t.id, t.product_id, p.id provider_id, p.firstName,
                         t.price, h.creationDate
-                            from products_productsTracking t
-                            inner join products_productsTrackingHeader h on h.id = t.header_id 
+                            from products_productstracking t
+                            inner join products_productstrackingheader h on h.id = t.header_id 
                             inner join administration_provider p on p.id = h.provider_id
                             where t.typeTracking = 'E' and t.product_id = {product_id}
                             order by h.creationDate desc

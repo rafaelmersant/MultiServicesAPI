@@ -26,7 +26,7 @@ class InvoicesHeaderSerializer(serializers.ModelSerializer):
         model = InvoicesHeader
         fields = ('id', 'company', 'company_id', 'customer', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 
                   'createdUser', 'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'cost', 'reference',
-                  'serverDate', 'invoiceType', 'invoiceStatus')
+                  'serverDate', 'invoiceType', 'invoiceStatus', 'amount_points')
    
 
 class InvoicesHeaderCreateSerializer(serializers.ModelSerializer):
@@ -37,26 +37,27 @@ class InvoicesHeaderCreateSerializer(serializers.ModelSerializer):
         model = InvoicesHeader
         fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 'createdUser', 
         'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'cost', 'reference', 'serverDate',
-        'invoiceType', 'invoiceStatus')
+        'invoiceType', 'invoiceStatus', 'amount_points')
         
     def create(self, validated_data):
         superavit_points = 125
         points_type = "E"
-        total_points = validated_data['subtotal'] // superavit_points
+        total_points = validated_data['amount_points'] // superavit_points
         invoice = InvoicesHeader.objects.create(**validated_data)
         
         if (invoice.paymentMethod == 'POINTS'):
             points_type = "R"
             total_points = validated_data['discount'] * -1
 
-        points = Points()
-        points.customer = Customer.objects.get(pk=validated_data['customer_id'])
-        points.invoice = InvoicesHeader.objects.get(pk=invoice.id) 
-        points.invoice_amount = invoice.subtotal
-        points.total_points = total_points 
-        points.type = points_type
-        points.createdUser = validated_data['createdUser']
-        points.save()
+        if (points_type == "E" and total_points > 0) or (points_type == "R" and total_points < 0):
+            points = Points()
+            points.customer = Customer.objects.get(pk=validated_data['customer_id'])
+            points.invoice = InvoicesHeader.objects.get(pk=invoice.id) 
+            points.invoice_amount = invoice.subtotal
+            points.total_points = total_points 
+            points.type = points_type
+            points.createdUser = validated_data['createdUser']
+            points.save()
             
         return invoice
 
@@ -68,16 +69,28 @@ class InvoicesHeaderUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = InvoicesHeader
         fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'sequence', 'paid', 
-        'printed', 'subtotal', 'itbis','discount', 'cost', 'reference', 'invoiceType', 'invoiceStatus')
+        'printed', 'subtotal', 'itbis','discount', 'cost', 'reference', 'invoiceType', 'invoiceStatus',
+        'amount_points')
     
     def update(self, instance, validated_data):
+        total_points = validated_data['amount_points'] // 125
         points = Points.objects.filter(invoice__id=instance.id)
        
         if points.exists():
             _points = Points.objects.get(id=points[0].id)
-            _points.invoice_amount = validated_data['subtotal']
-            _points.total_points = validated_data['subtotal'] // 125
+            _points.invoice_amount = validated_data['amount_points']
+            _points.total_points = total_points
             _points.save()
+        else:
+            if total_points > 0:
+                points = Points()
+                points.customer = Customer.objects.get(pk=validated_data['customer_id'])
+                points.invoice = InvoicesHeader.objects.filter(sequence=validated_data['sequence'])[0]
+                points.invoice_amount = validated_data['amount_points']
+                points.total_points = total_points
+                points.type = "E"
+                points.createdUser = points.invoice.createdUser
+                points.save()
         
         return super().update(instance, validated_data)
 
@@ -104,7 +117,7 @@ class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):
                   'customer_id', 'customer_firstName', 'customer_lastName', 'customer_email', 'customer_address',
                   'customer_identification', 'paymentMethod', 'sequence', 'ncf', 'paid', 'printed', 'subtotal', 'itbis',
                   'discount', 'cost', 'reference', 'serverDate', 'creationDate', 'createdUser', 'created_user_name',
-                  'invoiceType', 'invoiceStatus')
+                  'invoiceType', 'invoiceStatus', 'amount_points')
 
 
 class InvoicesHeaderMinimumSerializer(serializers.ModelSerializer):    
@@ -115,7 +128,7 @@ class InvoicesHeaderMinimumSerializer(serializers.ModelSerializer):
         model = InvoicesHeader
         fields = ('id', 'company_id', 'customer_id', 'paymentMethod', 'sequence', 'ncf', 'paid', 'printed',
                   'subtotal', 'itbis', 'discount', 'cost', 'reference', 'serverDate', 'creationDate', 'createdUser',
-                  'invoiceType', 'invoiceStatus')
+                  'invoiceType', 'invoiceStatus', 'amount_points')
 
 
 class InvoicesEmployeeSalesSerializer(serializers.Serializer):
