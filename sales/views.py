@@ -48,8 +48,8 @@ class InvoicesHeaderViewSet(ModelViewSet):
         end_date = self.request.query_params.get('end_date', None)
 
         if start_date is not None and end_date is not None:
-            self.queryset = self.queryset.filter(creationDate__gte=datetime.combine(start_date, datetime.time.min), \
-                                                creationDate__lte=datetime.combine(end_date, datetime.time.max))
+            self.queryset = self.queryset.filter(creationDate__gte=datetime.datetime.combine(start_date, datetime.time.min), \
+                                                creationDate__lte=datetime.datetime.combine(end_date, datetime.time.max))
 
         sequence = self.request.query_params.get('sequence', None)
 
