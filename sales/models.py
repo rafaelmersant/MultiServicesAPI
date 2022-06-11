@@ -44,6 +44,11 @@ class InvoicesHeader(models.Model):
         decimal_places=6,
         default=0
     )
+    amount_points = models.DecimalField(
+        max_digits=18,
+        decimal_places=6,
+        default=0
+    )
     creationDate = models.DateTimeField()
     createdUser = models.EmailField(null=True, blank=True)
     serverDate = models.DateTimeField(

@@ -21,6 +21,10 @@ from . import serializers
 from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, InvoicesLeadHeader,  \
     InvoicesLeadDetail, QuotationsDetail, QuotationsHeader, Points
 
+import datetime
+from datetime import datetime as date_format
+
+
 class InvoicesHeaderViewSet(ModelViewSet):
     queryset = InvoicesHeader.objects.select_related('company').select_related('customer').all()
     serializer_class = serializers.InvoicesHeaderSerializer
@@ -45,7 +49,11 @@ class InvoicesHeaderViewSet(ModelViewSet):
         end_date = self.request.query_params.get('end_date', None)
 
         if start_date is not None and end_date is not None:
-            self.queryset = self.queryset.filter(creationDate__date__gte=start_date, creationDate__date__lte=end_date)
+            _start_date = date_format.strptime(start_date, '%Y-%m-%d')
+            _end_date = date_format.strptime(end_date, '%Y-%m-%d')
+
+            self.queryset = self.queryset.filter(creationDate__gte=datetime.datetime.combine(_start_date, datetime.time.min), \
+                                                creationDate__lte=datetime.datetime.combine(_end_date, datetime.time.max))
 
         sequence = self.request.query_params.get('sequence', None)
 
@@ -186,7 +194,7 @@ class InvoicesLeadsHeaderViewSet(ModelViewSet):
         id = self.request.query_params.get('id', None)
 
         query = """
-                select h.id, c.firstName || ' ' || c.lastName customer, i.sequence invoice_no, 
+                select h.id, CONCAT(c.firstName, ' ', c.lastName) customer, i.sequence invoice_no, 
                         h.creationDate, h.company_id, c.identification customer_identification, 
                         c.identificationType customer_identification_type
                         from sales_invoicesleadheader h
@@ -263,12 +271,12 @@ class InvoicesCustomerViewSet(ModelViewSet):
        if start_date is not None and end_date is not None:
            query = """
                     select 
-                        c.id, c.firstName || ' ' || c.lastName customer_name, sum(h.subtotal) subtotal, sum(h.itbis) itbis, 
+                        c.id, CONCAT(c.firstName, ' ', c.lastName) customer_name, sum(h.subtotal) subtotal, sum(h.itbis) itbis, 
                         sum(h.cost) cost, sum(h.discount) discount
                     from sales_invoicesheader h
                     inner join administration_customer c on c.id = h.customer_id
-                    where h.creationDate between '#startDate#' and '#endDate#'
-                    group by c.id, c.firstName || ' ' || c.lastName
+                    where DATE(h.creationDate) between '#startDate#' and '#endDate#'
+                    group by c.id, CONCAT(c.firstName, ' ', c.lastName)
                     order by sum(h.subtotal) desc
                     """.replace("#startDate#", start_date).replace("#endDate#", end_date)
 
@@ -323,7 +331,7 @@ class EmployeeSalesViewSet(ModelViewSet):
                         sum(h.cost) cost, sum(h.discount) discount
                     from sales_invoicesheader h
                     inner join administration_user u on u.email = h.createdUser
-                    where h.creationDate between '#startDate#' and '#endDate#'
+                    where DATE(h.creationDate) between '#startDate#' and '#endDate#'
                     group by u.id, u.name
                     """.replace("#startDate#", start_date).replace("#endDate#", end_date)
 
