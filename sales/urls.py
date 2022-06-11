@@ -23,6 +23,7 @@ router.register('invoicesLeadDetail', views.InvoicesLeadsDetailViewSet)
 router.register('quotationsHeaders', views.QuotationsHeaderViewSet)
 router.register('quotationsDetails', views.QuotationsDetailViewSet)
 router.register('invoicesCustomers', views.InvoicesCustomerViewSet, basename="invoicesCustomers")
+router.register('employeesSales', views.EmployeeSalesViewSet, basename="employeesSales")
 
 urlpatterns = [
     path('', include(router.urls)),
