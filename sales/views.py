@@ -267,7 +267,7 @@ class InvoicesCustomerViewSet(ModelViewSet):
                         sum(h.cost) cost, sum(h.discount) discount
                     from sales_invoicesheader h
                     inner join administration_customer c on c.id = h.customer_id
-                    where h.creationDate between '#startDate#' and '#endDate#'
+                    where DATE(h.creationDate) between '#startDate#' and '#endDate#'
                     group by c.id, CONCAT(c.firstName, ' ', c.lastName)
                     order by sum(h.subtotal) desc
                     """.replace("#startDate#", start_date).replace("#endDate#", end_date)
@@ -323,7 +323,7 @@ class EmployeeSalesViewSet(ModelViewSet):
                         sum(h.cost) cost, sum(h.discount) discount
                     from sales_invoicesheader h
                     inner join administration_user u on u.email = h.createdUser
-                    where h.creationDate between '#startDate#' and '#endDate#'
+                    where DATE(h.creationDate) between '#startDate#' and '#endDate#'
                     group by u.id, u.name
                     """.replace("#startDate#", start_date).replace("#endDate#", end_date)
 
