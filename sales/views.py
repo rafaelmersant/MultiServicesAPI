@@ -186,7 +186,7 @@ class InvoicesLeadsHeaderViewSet(ModelViewSet):
         id = self.request.query_params.get('id', None)
 
         query = """
-                select h.id, c.firstName || ' ' || c.lastName customer, i.sequence invoice_no, 
+                select h.id, CONACT(c.firstName, ' ', c.lastName) customer, i.sequence invoice_no, 
                         h.creationDate, h.company_id, c.identification customer_identification, 
                         c.identificationType customer_identification_type
                         from sales_invoicesleadheader h
@@ -263,12 +263,12 @@ class InvoicesCustomerViewSet(ModelViewSet):
        if start_date is not None and end_date is not None:
            query = """
                     select 
-                        c.id, c.firstName || ' ' || c.lastName customer_name, sum(h.subtotal) subtotal, sum(h.itbis) itbis, 
+                        c.id, CONACT(c.firstName, ' ', c.lastName) customer_name, sum(h.subtotal) subtotal, sum(h.itbis) itbis, 
                         sum(h.cost) cost, sum(h.discount) discount
                     from sales_invoicesheader h
                     inner join administration_customer c on c.id = h.customer_id
                     where h.creationDate between '#startDate#' and '#endDate#'
-                    group by c.id, c.firstName || ' ' || c.lastName
+                    group by c.id, CONACT(c.firstName, ' ', c.lastName)
                     order by sum(h.subtotal) desc
                     """.replace("#startDate#", start_date).replace("#endDate#", end_date)
 
