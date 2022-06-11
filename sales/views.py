@@ -48,10 +48,10 @@ class InvoicesHeaderViewSet(ModelViewSet):
         start_date = self.request.query_params.get('start_date', None)
         end_date = self.request.query_params.get('end_date', None)
 
-        _start_date = date_format.strptime(start_date, '%Y-%m-%d')
-        _end_date = date_format.strptime(end_date, '%Y-%m-%d')
-
         if start_date is not None and end_date is not None:
+            _start_date = date_format.strptime(start_date, '%Y-%m-%d')
+            _end_date = date_format.strptime(end_date, '%Y-%m-%d')
+
             self.queryset = self.queryset.filter(creationDate__gte=datetime.datetime.combine(_start_date, datetime.time.min), \
                                                 creationDate__lte=datetime.datetime.combine(_end_date, datetime.time.max))
 
