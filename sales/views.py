@@ -21,6 +21,9 @@ from . import serializers
 from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, InvoicesLeadHeader,  \
     InvoicesLeadDetail, QuotationsDetail, QuotationsHeader, Points
 
+import datetime
+
+
 class InvoicesHeaderViewSet(ModelViewSet):
     queryset = InvoicesHeader.objects.select_related('company').select_related('customer').all()
     serializer_class = serializers.InvoicesHeaderSerializer
@@ -45,7 +48,8 @@ class InvoicesHeaderViewSet(ModelViewSet):
         end_date = self.request.query_params.get('end_date', None)
 
         if start_date is not None and end_date is not None:
-            self.queryset = self.queryset.filter(creationDate__date__gte=start_date, creationDate__date__lte=end_date)
+            self.queryset = self.queryset.filter(creationDate__gte=datetime.combine(start_date, datetime.time.min), \
+                                                creationDate__lte=datetime.combine(end_date, datetime.time.max))
 
         sequence = self.request.query_params.get('sequence', None)
 
