@@ -48,6 +48,8 @@ class InvoicesHeaderCreateSerializer(serializers.ModelSerializer):
         if (invoice.paymentMethod == 'POINTS'):
             points_type = "R"
             total_points = validated_data['discount'] * -1
+            invoice.paid = True
+            invoice.save()
 
         if (points_type == "E" and total_points > 0) or (points_type == "R" and total_points < 0):
             points = Points()
