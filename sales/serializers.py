@@ -51,7 +51,8 @@ class InvoicesHeaderCreateSerializer(serializers.ModelSerializer):
             invoice.paid = True
             invoice.save()
 
-        if (points_type == "E" and total_points > 0) or (points_type == "R" and total_points < 0):
+        if (points_type == "E" and total_points > 0 and invoice.customer_id != 1) or \
+            (points_type == "R" and total_points < 0 and invoice.customer_id != 1):
             points = Points()
             points.customer = Customer.objects.get(pk=validated_data['customer_id'])
             points.invoice = InvoicesHeader.objects.get(pk=invoice.id) 
@@ -84,10 +85,12 @@ class InvoicesHeaderUpdateSerializer(serializers.ModelSerializer):
             _points.total_points = total_points
             _points.save()
         else:
-            if total_points > 0:
+            invoice = InvoicesHeader.objects.filter(sequence=validated_data['sequence'])[0]
+            
+            if total_points > 0 and invoice.customer_id != 1:
                 points = Points()
                 points.customer = Customer.objects.get(pk=validated_data['customer_id'])
-                points.invoice = InvoicesHeader.objects.filter(sequence=validated_data['sequence'])[0]
+                points.invoice = invoice
                 points.invoice_amount = validated_data['amount_points']
                 points.total_points = total_points
                 points.type = "E"
