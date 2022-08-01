@@ -238,7 +238,7 @@ class InvoicesLeadsDetailViewSet(ModelViewSet):
 class QuotationsHeaderViewSet(ModelViewSet):
     queryset = QuotationsHeader.objects.prefetch_related('company').all()
     pagination_class = StandardResultsSetPaginationHigh
-    filter_backends = [DjangoFilterBackend, SearchFilter,]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'customer', 'creationDate']
     # permission_classes = [IsAuthenticated]
 
