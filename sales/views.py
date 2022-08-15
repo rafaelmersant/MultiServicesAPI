@@ -11,7 +11,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from MultiServices.paginations import InvoiceListPagination, StandardResultsSetPaginationHigh
+from MultiServices.paginations import InvoiceListPagination, StandardResultsSetPaginationHigh, StandardResultsSetPaginationMedium
 
 # Serializers
 from . import serializers
@@ -227,8 +227,8 @@ class InvoicesLeadsDetailViewSet(ModelViewSet):
 
 class QuotationsHeaderViewSet(ModelViewSet):
     queryset = QuotationsHeader.objects.prefetch_related('company').all()
-    pagination_class = StandardResultsSetPaginationHigh
-    filter_backends = [DjangoFilterBackend, SearchFilter,]
+    pagination_class = StandardResultsSetPaginationMedium
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['id', 'customer', 'creationDate']
     # permission_classes = [IsAuthenticated]
 
