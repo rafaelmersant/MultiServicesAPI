@@ -76,27 +76,28 @@ class InvoicesHeaderUpdateSerializer(serializers.ModelSerializer):
         'amount_points')
     
     def update(self, instance, validated_data):
-        total_points = validated_data['amount_points'] // 125
-        points = Points.objects.filter(invoice__id=instance.id)
-       
-        if points.exists():
-            _points = Points.objects.get(id=points[0].id)
-            _points.invoice_amount = validated_data['amount_points']
-            _points.total_points = total_points
-            _points.save()
-        else:
-            invoice = InvoicesHeader.objects.filter(sequence=validated_data['sequence'])[0]
-            
-            if total_points > 0 and invoice.customer_id != 1:
-                points = Points()
-                points.customer = Customer.objects.get(pk=validated_data['customer_id'])
-                points.invoice = invoice
-                points.invoice_amount = validated_data['amount_points']
-                points.total_points = total_points
-                points.type = "E"
-                points.createdUser = points.invoice.createdUser
-                points.save()
+        if validated_data['paymentMethod'] != 'POINTS':
+            total_points = validated_data['amount_points'] // 125
+            points = Points.objects.filter(invoice__id=instance.id)
         
+            if points.exists():
+                _points = Points.objects.get(id=points[0].id)
+                _points.invoice_amount = validated_data['amount_points']
+                _points.total_points = total_points
+                _points.save()
+            else:
+                invoice = InvoicesHeader.objects.filter(sequence=validated_data['sequence'])[0]
+                
+                if total_points > 0 and invoice.customer_id != 1:
+                    points = Points()
+                    points.customer = Customer.objects.get(pk=validated_data['customer_id'])
+                    points.invoice = invoice
+                    points.invoice_amount = validated_data['amount_points']
+                    points.total_points = total_points
+                    points.type = "E"
+                    points.createdUser = points.invoice.createdUser
+                    points.save()
+            
         return super().update(instance, validated_data)
 
 
