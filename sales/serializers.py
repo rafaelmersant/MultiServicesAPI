@@ -24,7 +24,8 @@ class InvoicesHeaderSerializer(serializers.ModelSerializer):
     class Meta:
         model = InvoicesHeader
         fields = ('id', 'company', 'company_id', 'customer', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 
-                  'createdUser', 'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'reference', 'serverDate')
+                  'createdUser', 'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'cost', 'reference',
+                  'serverDate', 'invoiceType', 'invoiceStatus')
 
 
 class InvoicesHeaderCreateSerializer(serializers.ModelSerializer):
@@ -33,8 +34,9 @@ class InvoicesHeaderCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InvoicesHeader
-        fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 
-                  'createdUser', 'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'reference', 'serverDate')
+        fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'creationDate', 'createdUser', 
+        'sequence', 'paid', 'printed', 'subtotal', 'itbis','discount', 'cost', 'reference', 'serverDate',
+        'invoiceType', 'invoiceStatus')
 
 
 class InvoicesHeaderUpdateSerializer(serializers.ModelSerializer):
@@ -44,7 +46,7 @@ class InvoicesHeaderUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = InvoicesHeader
         fields = ('id', 'company_id', 'customer_id', 'paymentMethod',  'ncf', 'sequence', 'paid', 
-        'printed', 'subtotal', 'itbis','discount', 'reference')
+        'printed', 'subtotal', 'itbis','discount', 'cost', 'reference', 'invoiceType', 'invoiceStatus')
 
 
 class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):    
@@ -68,7 +70,8 @@ class InvoicesHeaderReducedSerializer(serializers.ModelSerializer):
         fields = ('id', 'company_id', 'company_address', 'company_rnc', 'company_phoneNumber', 'company_email',
                   'customer_id', 'customer_firstName', 'customer_lastName', 'customer_email', 'customer_address',
                   'customer_identification', 'paymentMethod', 'sequence', 'ncf', 'paid', 'printed', 'subtotal', 'itbis',
-                  'discount', 'reference', 'serverDate', 'creationDate', 'createdUser', 'created_user_name')
+                  'discount', 'cost', 'reference', 'serverDate', 'creationDate', 'createdUser', 'created_user_name',
+                  'invoiceType', 'invoiceStatus')
 
 
 class InvoicesDetailSerializer(serializers.ModelSerializer):
@@ -184,3 +187,56 @@ class InvoicesLeadDetailReducedSerializer(serializers.ModelSerializer):
     class Meta:
         model = InvoicesLeadDetail
         fields = ('id', 'header_id', 'product_id', 'quantity', 'creationDate')
+
+
+# QuotationsHeader --> Cotizaciones
+class QuotationsHeaderSerializer(serializers.ModelSerializer):
+    company = CompanySerializer(read_only=True)
+    customer = CustomerReducedSerializer(read_only=True)
+
+    class Meta:
+        model = QuotationsHeader
+        fields = ('id', 'company', 'company_id', 'customer', 'customer_id', 'reference', 'printed',
+                  'subtotal', 'discount', 'itbis', 'creationDate', 'createdUser', 'serverDate')
+
+
+class QuotationsHeaderReducedSerializer(serializers.ModelSerializer):
+    company_id = serializers.IntegerField()
+    customer_id = serializers.IntegerField()
+
+    class Meta:
+        model = QuotationsHeader
+        fields = ('id', 'company_id', 'customer_id', 'reference', 'printed', 'subtotal', 'discount',
+                  'itbis', 'creationDate', 'createdUser', 'serverDate')
+
+
+# QuotationsDetail --> Cotizaciones
+class QuotationsDetailSerializer(serializers.ModelSerializer):
+    header = QuotationsHeaderReducedSerializer(read_only=True)
+    header_id = serializers.IntegerField(write_only=True)
+    product = ProductReducedSerializer(read_only=True)
+    product_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = QuotationsDetail
+        fields = ('id', 'header', 'header_id', 'product', 'product_id', 'quantity', 'price',
+                  'cost', 'discount', 'itbis', 'creationDate')
+
+
+class QuotationsDetailReducedSerializer(serializers.ModelSerializer):
+    header_id = serializers.IntegerField()
+    product_id = serializers.IntegerField()
+
+    class Meta:
+        model = QuotationsDetail
+        fields = ('id', 'header_id', 'product_id', 'quantity', 'price',
+                  'cost', 'discount', 'itbis', 'creationDate')
+
+
+
+class InvoicesCustomerSerializer(serializers.Serializer):
+    subtotal = serializers.DecimalField(max_digits=18, decimal_places=6, default=0)
+    itbis = serializers.DecimalField(max_digits=18, decimal_places=6, default=0)
+    cost = serializers.DecimalField(max_digits=18, decimal_places=6, default=0)
+    discount = serializers.DecimalField(max_digits=18, decimal_places=6, default=0)
+    customer_name = serializers.CharField(max_length=255)

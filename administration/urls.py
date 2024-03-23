@@ -8,8 +8,6 @@ from rest_framework.routers import DefaultRouter
 from . import views
 
 router = DefaultRouter()
-
-router = DefaultRouter()
 router.register('companies', views.CompanyViewSet)
 router.register('users', views.UserViewSet)
 router.register('customers', views.CustomerViewSet)

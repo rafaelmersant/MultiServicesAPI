@@ -1,21 +1,23 @@
 """ Sales views. """
 
 # Django
+from msilib import sequence
 from django_filters.rest_framework import DjangoFilterBackend
 
 # Django REST framework
+from rest_framework.decorators import api_view
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from MultiServices.paginations import InvoiceListPagination, StandardResultsSetPaginationHigh
+from MultiServices.paginations import InvoiceListPagination, StandardResultsSetPaginationHigh, StandardResultsSetPaginationMedium
 
 # Serializers
 from . import serializers
 
 # Models
-from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, InvoicesLeadHeader, InvoicesLeadDetail
+from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, InvoicesLeadHeader, InvoicesLeadDetail, QuotationsDetail, QuotationsHeader
 
 class InvoicesHeaderViewSet(ModelViewSet):
     queryset = InvoicesHeader.objects.select_related('company').select_related('customer').all()
@@ -37,16 +39,22 @@ class InvoicesHeaderViewSet(ModelViewSet):
         return serializers.InvoicesHeaderSerializer
 
     def get_queryset(self):
+        start_date = self.request.query_params.get('start_date', None)
+        end_date = self.request.query_params.get('end_date', None)
+
+        if start_date is not None and end_date is not None:
+            self.queryset = self.queryset.filter(creationDate__date__gte=start_date, creationDate__date__lte=end_date)
+
         sequence = self.request.query_params.get('sequence', None)
-        
+
         if sequence is not None:
             query = """
                     select h.id, h.company_id, m.address company_address, m.rnc company_rnc, m.email company_email, 
                                 m.phoneNumber company_phoneNumber, customer_id, c.firstName customer_firstName, 
                                 c.lastName customer_lastName, c.identification customer_identification, 
                                 c.address customer_address, c.email customer_email, h.paymentMethod, h.ncf, h.createdUser, 
-                                h.creationDate, h.sequence, h.paid, h.printed, h.subtotal, h.itbis, h.discount, 
-                                h.reference, h.serverDate, u.name created_user_name
+                                h.creationDate, h.sequence, h.paid, h.printed, h.subtotal, h.itbis, h.discount, h.cost,
+                                h.reference, h.serverDate, h.invoiceType, h.invoiceStatus, u.name created_user_name
                         from sales_invoicesheader h
                         inner join administration_customer c on c.id = h.customer_id
                         inner join administration_company m on m.id = h.company_id
@@ -215,3 +223,78 @@ class InvoicesLeadsDetailViewSet(ModelViewSet):
         if self.request.method == 'PUT':
             return serializers.InvoicesLeadDetailReducedSerializer
         return serializers.InvoicesLeadDetailSerializer
+
+
+class QuotationsHeaderViewSet(ModelViewSet):
+    queryset = QuotationsHeader.objects.prefetch_related('company').all()
+    pagination_class = StandardResultsSetPaginationMedium
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['id', 'customer', 'creationDate']
+    # permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT' or self.request.method == 'POST':
+            return serializers.QuotationsHeaderReducedSerializer
+        return serializers.QuotationsHeaderSerializer
+  
+
+class QuotationsDetailViewSet(ModelViewSet):
+    queryset = QuotationsDetail.objects.select_related('header').select_related('product').all()
+    serializer_class = serializers.QuotationsDetailSerializer
+    filter_backends = [DjangoFilterBackend,]
+    filterset_fields = ['id', 'header', 'header_id', 'product', 'product_id', 'creationDate']
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT' or self.request.method == 'POST':
+            return serializers.QuotationsDetailReducedSerializer
+        return serializers.QuotationsDetailSerializer
+
+
+class InvoicesCustomerViewSet(ModelViewSet):
+    http_method_names = ['get']
+    serializer_class = serializers.InvoicesCustomerSerializer
+
+    def get_queryset(self):
+       start_date = self.request.query_params.get('start_date', None)
+       end_date = self.request.query_params.get('end_date', None)
+
+       if start_date is not None and end_date is not None:
+           query = """
+                    select 
+                        c.id, c.firstName || ' ' || c.lastName customer_name, sum(h.subtotal) subtotal, sum(h.itbis) itbis, 
+                        sum(h.cost) cost, sum(h.discount) discount
+                    from sales_invoicesheader h
+                    inner join administration_customer c on c.id = h.customer_id
+                    where h.creationDate between '#startDate#' and '#endDate#'
+                    group by c.id, c.firstName || ' ' || c.lastName
+                    order by sum(h.subtotal) desc
+                    """.replace("#startDate#", start_date).replace("#endDate#", end_date)
+
+           return InvoicesHeader.objects.raw(query)
+
+
+@api_view(['GET','POST'])
+def cancel_invoice(request, invoice):
+    if request.method == 'POST':
+        try:
+            invoice_header = InvoicesHeader.objects.get(sequence=invoice)
+            invoice_header.subtotal = 0
+            invoice_header.discount = 0
+            invoice_header.itbis = 0
+            invoice_header.cost = 0
+            invoice_header.paid = True
+            invoice_header.invoiceStatus = 'ANULADA'
+            invoice_header.save()
+
+            invoice_details = InvoicesDetail.objects.filter(invoice__id=invoice_header.id)
+            for detail in invoice_details:
+                detail.price = 0
+                detail.discount = 0
+                detail.cost = 0
+                detail.itbis = 0
+                detail.save()
+
+        except InvoicesHeader.DoesNotExist:
+            return Response({"message": f"La factura #{invoice} no fue encontrada, favor verificar."})
+
+    return Response({f"message": f"Factura #{invoice} anulada con exito!"})

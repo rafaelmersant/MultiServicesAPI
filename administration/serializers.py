@@ -6,6 +6,8 @@ from rest_framework import serializers
 # Models
 from .models import Company, User, Customer, FiscalGov, Provider
 
+import hashlib
+
 
 class CompanySerializer(serializers.ModelSerializer):
 
@@ -18,12 +20,22 @@ class CompanySerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField(write_only=True)
+    password = serializers.CharField(required=False)
 
     class Meta:
         model = User
         fields = ('id', 'company', 'company_id', 'email', 'name', 'creationDate', 'createdUser',
                   'userHash', 'userRole', 'password')
-
+    
+    def save(self, **kwargs):
+        password = self.validated_data['password']
+        if (len(password) < 32):
+            password = hashlib.md5(password.encode())
+            password = password.hexdigest()
+            self.validated_data["password"] = password
+            
+        return super().save(**kwargs)
+    
 
 class UserReducedSerializer(serializers.ModelSerializer):
     company_id = serializers.IntegerField()
@@ -32,6 +44,15 @@ class UserReducedSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'company_id', 'email', 'name', 'creationDate', 'createdUser',
                   'userHash', 'userRole', 'password')
+    
+    def save(self, **kwargs):
+        password = self.validated_data['password']
+        if (len(password) < 32):
+            password = hashlib.md5(password.encode())
+            password = password.hexdigest()
+            self.validated_data["password"] = password
+
+        return super().save(**kwargs)
 
 
 class CustomerSerializer(serializers.ModelSerializer):

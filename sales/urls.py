@@ -20,8 +20,11 @@ router.register('invoicesSequences', views.InvoicesSequenceViewSet)
 router.register('invoicesHeadersFull', views.InvoicesHeaderListFull)
 router.register('invoicesLeadHeader', views.InvoicesLeadsHeaderViewSet, basename="leadHeaders")
 router.register('invoicesLeadDetail', views.InvoicesLeadsDetailViewSet)
-
+router.register('quotationsHeaders', views.QuotationsHeaderViewSet)
+router.register('quotationsDetails', views.QuotationsDetailViewSet)
+router.register('invoicesCustomers', views.InvoicesCustomerViewSet, basename="invoicesCustomers")
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('cancelInvoice/<int:invoice>', views.cancel_invoice)
 ]

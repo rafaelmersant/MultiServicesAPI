@@ -8,6 +8,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.viewsets import ModelViewSet
 
+from sales.models import InvoicesHeader
+
 # Models
 from .models import (Product, ProductCategory, ProductsStock, ProductsTracking,
                      ProductsTrackingHeader, PurchaseOrder)
@@ -35,7 +37,7 @@ class ProductViewSet(ModelViewSet):
         return ProductSerializer
 
 
-class ProductOcurrencesViewSet(ModelViewSet):
+class UpdateDataViewSet(ModelViewSet):
     queryset = Product.objects.select_related('company').select_related('category').select_related('stocks').all()
     pagination_class = StandardResultsSetPaginationHigh
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -43,11 +45,11 @@ class ProductOcurrencesViewSet(ModelViewSet):
     search_fields = ['description', 'barcode']
 
     def get_serializer_class(self):
-        products = Product.objects.all()
-        for prod in products:
-            tracking = ProductsTracking.objects.filter(product_id=prod.id, typeTracking='S').count()
-            prod.ocurrences = tracking
-            prod.save()
+        invoices = InvoicesHeader.objects.all()
+        for invoice in invoices:
+            invoice.paymentMethod = ""
+            invoice.invoiceType = "Contado"
+            invoice.save()
 
         if self.request.method == 'PUT':
             return ProductReducedSerializer
