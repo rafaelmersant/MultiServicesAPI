@@ -64,7 +64,8 @@ class InvoicesHeaderViewSet(ModelViewSet):
                                 c.lastName customer_lastName, c.identification customer_identification, 
                                 c.address customer_address, c.email customer_email, h.paymentMethod, h.ncf, h.createdUser, 
                                 h.creationDate, h.sequence, h.paid, h.printed, h.subtotal, h.itbis, h.discount, h.cost,
-                                h.reference, h.serverDate, h.invoiceType, h.invoiceStatus, u.name created_user_name
+                                h.reference, h.serverDate, h.invoiceType, h.invoiceStatus, u.name created_user_name,
+                                h.employee_id
                         from sales_invoicesheader h
                         inner join administration_customer c on c.id = h.customer_id
                         inner join administration_company m on m.id = h.company_id
@@ -330,7 +331,7 @@ class EmployeeSalesViewSet(ModelViewSet):
                         u.id, u.name createdUser, sum(h.subtotal) subtotal, sum(h.itbis) itbis, 
                         sum(h.cost) cost, sum(h.discount) discount
                     from sales_invoicesheader h
-                    inner join administration_user u on u.email = h.createdUser
+                    inner join administration_user u on u.id = h.employee_id
                     where DATE(h.creationDate) between '#startDate#' and '#endDate#'
                     group by u.id, u.name
                     """.replace("#startDate#", start_date).replace("#endDate#", end_date)
