@@ -37,8 +37,8 @@ def add_new_product(description, price, cost, quantity, company, category):
 # Main Process        
 with open('productsFull.csv', encoding='ISO-8859-1', newline='') as csvfile:
     products = csv.reader(csvfile, delimiter=',', quotechar='|')
-    company = Company.objects.get(pk=1)
-    category = ProductCategory.objects.get(pk=1)
+    company = Company.objects.get(pk=14)
+    category = ProductCategory.objects.get(pk=56)
 
     for product in products:
         add_new_product(product[0], product[1], product[2], product[3], company, category)

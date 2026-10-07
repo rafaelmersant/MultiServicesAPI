@@ -26,3 +26,7 @@ media
 !.vscode/extensions.json 
 .history
 
+administration/signfile.py
+administration/certificado.p12
+administration/postulacion.xml
+administration/PostulacionFirmada.xml
