@@ -30,3 +30,17 @@ administration/signfile.py
 administration/certificado.p12
 administration/postulacion.xml
 administration/PostulacionFirmada.xml
+
+.env
+*.p12
+*.pfx
+*.pem
+*.key
+
+.pytest_cache/
+.venv/
+
+test_data/
+tests/
+
+test_set_inventory.json

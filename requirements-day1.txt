@@ -1,0 +1,7 @@
+openpyxl>=3.1,<4
+lxml>=5,<7
+requests>=2.32,<3
+python-dotenv>=1.0,<2
+pytest>=8,<9
+cryptography>=44,<47
+signxml>=4,<5
