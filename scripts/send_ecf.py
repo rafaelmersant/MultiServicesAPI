@@ -26,8 +26,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def read_ecf(xml_data: bytes) -> tuple[str, str]:
-    """Valida estructura básica y devuelve RNC emisor y e-NCF."""
+def read_ecf(xml_data: bytes) -> tuple[str, str, str]:
+    """Valida estructura básica y devuelve RNC emisor, e-NCF y TipoeCF."""
     parser = etree.XMLParser(
         resolve_entities=False,
         no_network=True,
@@ -47,11 +47,12 @@ def read_ecf(xml_data: bytes) -> tuple[str, str]:
 
     rnc = get_value("RNCEmisor")
     encf = get_value("eNCF")
+    tipo_ecf = get_value("TipoeCF")
 
-    if not rnc or not encf:
-        raise ValueError("El XML debe contener RNCEmisor y eNCF.")
+    if not rnc or not encf or not tipo_ecf:
+        raise ValueError("El XML debe contener RNCEmisor, eNCF y TipoeCF.")
 
-    return rnc, encf
+    return rnc, encf, tipo_ecf
 
 
 def main() -> int:
@@ -69,6 +70,16 @@ def main() -> int:
     help="Ruta del XSD oficial correspondiente al tipo de e-CF.",
     )
     parser.add_argument(
+        "--case-id",
+        default=None,
+        help="Identificador del caso del Excel (opcional; no se infiere del XML).",
+    )
+    parser.add_argument(
+        "--registry-db",
+        default="test_data/ecf/test_run_registry.sqlite3",
+        help="Ruta de la base SQLite que bloquea envíos duplicados.",
+    )
+    parser.add_argument(
         "--no-poll",
         action="store_true",
         help="Enviar y obtener TrackId sin consultar el resultado.",
@@ -84,7 +95,7 @@ def main() -> int:
             raise FileNotFoundError(f"No existe el XML: {xml_path}")
 
         xml_data = xml_path.read_bytes()
-        rnc, encf = read_ecf(xml_data)
+        rnc, encf, tipo_ecf = read_ecf(xml_data)
 
         # Validar el XML contra el XSD oficial.
         xsd_path = Path(args.xsd)
@@ -93,9 +104,6 @@ def main() -> int:
             raise FileNotFoundError(
                 f"No existe el XSD: {xsd_path}"
             )
-
-        # validate_xsd(xml_data, xsd_path)
-        # logger.info("Validación XSD completada.")
 
         # DGII requiere el archivo nombrado con RNC + e-NCF.
         filename = f"{rnc}{encf}.xml"
@@ -112,6 +120,10 @@ def main() -> int:
         signed_xml = sign_xml(xml_data, certificate)
         verify_xml_signature(signed_xml, certificate)
         logger.info("Firma del e-CF verificada localmente.")
+
+        # Validar exactamente el XML firmado que se enviará a DGII.
+        validate_xsd(signed_xml, xsd_path)
+        logger.info("XML firmado validado contra el XSD oficial: %s", xsd_path)
 
         # 3. Guardar una copia firmada para auditoría.
         signed_path = xml_path.with_name(
@@ -135,13 +147,19 @@ def main() -> int:
             result_base_url=settings.result_base_url,
         )
 
-        registry = ECFTestRegistry()
-        reservation = registry.reserve_send(
+        registry = ECFTestRegistry(args.registry_db)
+        # Reservar justo antes de la llamada de red. Si ya existe, el registro
+        # bloquea el envío y no se contacta a DGII.
+        registry.reserve_send(
             rnc=rnc,
             encf=encf,
-            case_id=None,  # puedes obtenerlo del Excel; no inventarlo
-            tipo_ecf=tipo_ecf,  # extrae el valor TipoeCF del XML
+            case_id=args.case_id,
+            tipo_ecf=tipo_ecf,
             signed_xml=signed_xml,
+        )
+        logger.info(
+            "e-NCF reservado en el registro local: RNC=%s, e-NCF=%s, tipo=%s",
+            rnc, encf, tipo_ecf,
         )
 
         reception = client.send_ecf(
@@ -255,7 +273,7 @@ def main() -> int:
         return 1
 
     except Exception as exc:
-        logger.exception("Falló el flujo del Día 3: %s", type(exc).__name__)
+        logger.exception("Falló el flujo de envío e-CF: %s", type(exc).__name__)
         print(f"ERROR: {type(exc).__name__}: {exc}")
         return 1
 
