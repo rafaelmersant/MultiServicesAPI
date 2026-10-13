@@ -7,6 +7,7 @@ before an operator manually changes any record.
 from __future__ import annotations
 
 import hashlib
+import json
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -102,6 +103,19 @@ class ECFTestRegistry:
                 CREATE INDEX IF NOT EXISTS ix_ecf_test_runs_status
                 ON ecf_test_runs(status)
             """)
+            db.execute("""
+                CREATE TABLE IF NOT EXISTS ecf_test_run_history (
+                    history_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    rnc TEXT NOT NULL,
+                    encf TEXT NOT NULL,
+                    archived_at TEXT NOT NULL,
+                    record_json TEXT NOT NULL
+                )
+            """)
+            db.execute("""
+                CREATE INDEX IF NOT EXISTS ix_ecf_test_run_history_encf
+                ON ecf_test_run_history(rnc, encf, archived_at)
+            """)
 
     def get(self, rnc: str, encf: str) -> RegistryRecord | None:
         with self._connect() as db:
@@ -110,6 +124,25 @@ class ECFTestRegistry:
                 (rnc, encf),
             ).fetchone()
         return self._to_record(row) if row else None
+
+    def require_accepted_reference(self, *, rnc: str, encf: str) -> RegistryRecord:
+        """Fail closed unless a referenced e-CF is recorded as accepted by DGII.
+
+        This prevents sending a credit/debit note before its referenced
+        comprobante has a confirmed accepted result in the local registry.
+        """
+        record = self.get(rnc, encf)
+        if record is None:
+            raise RegistryError(
+                f"El comprobante referenciado {encf} del RNC {rnc} no aparece "
+                "en el registro local. No se enviará el comprobante dependiente."
+            )
+        if record.status != "accepted":
+            raise RegistryError(
+                f"El comprobante referenciado {encf} del RNC {rnc} tiene estado "
+                f"'{record.status}', no 'accepted'. No se enviará el comprobante dependiente."
+            )
+        return record
 
     def reserve_send(
         self,
@@ -120,25 +153,59 @@ class ECFTestRegistry:
         tipo_ecf: str | None,
         signed_xml: bytes,
         notes: str | None = None,
+        allow_rejected_retry: bool = False,
     ) -> RegistryRecord:
-        """Atomically reserve an e-NCF immediately before its first network send.
+        """Reserve a first send, or explicitly retry a DGII-rejected e-NCF.
 
-        Any existing row blocks a second send, including prior failed/conditional
-        results. This intentionally prioritizes preventing duplicate submissions.
+        A retry is allowed only with allow_rejected_retry=True and status
+        'rejected'. The previous registry row is archived as JSON before the
+        active row is reset, preserving its TrackId and DGII result.
         """
         now = utc_now()
         digest = sha256_hex(signed_xml)
         try:
             with self._connect() as db:
-                db.execute(
-                    """
-                    INSERT INTO ecf_test_runs
-                    (rnc, encf, case_id, tipo_ecf, status, xml_sha256,
-                     notes, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, 'sending', ?, ?, ?, ?)
-                    """,
-                    (rnc, encf, case_id, tipo_ecf, digest, notes, now, now),
-                )
+                existing = db.execute(
+                    "SELECT * FROM ecf_test_runs WHERE rnc = ? AND encf = ?",
+                    (rnc, encf),
+                ).fetchone()
+
+                if existing is not None:
+                    if not (allow_rejected_retry and existing["status"] == "rejected"):
+                        raise DuplicateECFError(
+                            f"e-NCF {encf} del RNC {rnc} ya está registrado "
+                            f"con estado '{existing['status']}'. "
+                            "No se enviará nuevamente automáticamente."
+                        )
+
+                    snapshot = {key: existing[key] for key in existing.keys()}
+                    db.execute(
+                        "INSERT INTO ecf_test_run_history "
+                        "(rnc, encf, archived_at, record_json) VALUES (?, ?, ?, ?)",
+                        (rnc, encf, now, json.dumps(snapshot, ensure_ascii=False, default=str)),
+                    )
+                    db.execute(
+                        """
+                        UPDATE ecf_test_runs
+                        SET case_id = ?, tipo_ecf = ?, status = 'sending',
+                            xml_sha256 = ?, track_id = NULL, dgii_code = NULL,
+                            dgii_status = NULL, sequence_used = NULL, sent_at = NULL,
+                            result_at = NULL, notes = ?, updated_at = ?
+                        WHERE rnc = ? AND encf = ? AND status = 'rejected'
+                        """,
+                        (case_id, tipo_ecf, digest, notes or f"Reintento explícito; intento anterior archivado {now}", now, rnc, encf),
+                    )
+                else:
+                    db.execute(
+                        """
+                        INSERT INTO ecf_test_runs
+                        (rnc, encf, case_id, tipo_ecf, status, xml_sha256,
+                         notes, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, 'sending', ?, ?, ?, ?)
+                        """,
+                        (rnc, encf, case_id, tipo_ecf, digest, notes, now, now),
+                    )
+
                 row = db.execute(
                     "SELECT * FROM ecf_test_runs WHERE rnc = ? AND encf = ?",
                     (rnc, encf),
@@ -150,9 +217,7 @@ class ECFTestRegistry:
                 f"con estado '{existing.status}'"
                 if existing else f"e-NCF {encf} del RNC {rnc} ya está registrado"
             )
-            raise DuplicateECFError(
-                detail + ". No se enviará nuevamente automáticamente."
-            ) from exc
+            raise DuplicateECFError(detail + ". No se enviará nuevamente automáticamente.") from exc
         return self._to_record(row)
 
     def mark_submitted(

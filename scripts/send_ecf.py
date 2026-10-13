@@ -26,8 +26,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def read_ecf(xml_data: bytes) -> tuple[str, str, str]:
-    """Valida estructura básica y devuelve RNC emisor, e-NCF y TipoeCF."""
+def read_ecf(xml_data: bytes) -> tuple[str, str, str, str]:
+    """Devuelve RNC emisor, e-NCF, TipoeCF y NCFModificado si existe."""
     parser = etree.XMLParser(
         resolve_entities=False,
         no_network=True,
@@ -48,11 +48,12 @@ def read_ecf(xml_data: bytes) -> tuple[str, str, str]:
     rnc = get_value("RNCEmisor")
     encf = get_value("eNCF")
     tipo_ecf = get_value("TipoeCF")
+    reference_encf = get_value("NCFModificado")
 
     if not rnc or not encf or not tipo_ecf:
         raise ValueError("El XML debe contener RNCEmisor, eNCF y TipoeCF.")
 
-    return rnc, encf, tipo_ecf
+    return rnc, encf, tipo_ecf, reference_encf
 
 
 def main() -> int:
@@ -80,6 +81,11 @@ def main() -> int:
         help="Ruta de la base SQLite que bloquea envíos duplicados.",
     )
     parser.add_argument(
+        "--retry-rejected",
+        action="store_true",
+        help="Permite reenviar explícitamente un e-NCF cuyo último resultado registrado fue rechazado; archiva el intento anterior.",
+    )
+    parser.add_argument(
         "--no-poll",
         action="store_true",
         help="Enviar y obtener TrackId sin consultar el resultado.",
@@ -95,7 +101,17 @@ def main() -> int:
             raise FileNotFoundError(f"No existe el XML: {xml_path}")
 
         xml_data = xml_path.read_bytes()
-        rnc, encf, tipo_ecf = read_ecf(xml_data)
+        rnc, encf, tipo_ecf, reference_encf = read_ecf(xml_data)
+
+        # Inicializar el registro antes de firmar/autenticar y validar las
+        # dependencias locales antes de cualquier llamada a la DGII.
+        registry = ECFTestRegistry(args.registry_db)
+        if reference_encf:
+            registry.require_accepted_reference(rnc=rnc, encf=reference_encf)
+            logger.info(
+                "Comprobante referenciado %s consta como aceptado en el registro.",
+                reference_encf,
+            )
 
         # Validar el XML contra el XSD oficial.
         xsd_path = Path(args.xsd)
@@ -147,7 +163,6 @@ def main() -> int:
             result_base_url=settings.result_base_url,
         )
 
-        registry = ECFTestRegistry(args.registry_db)
         # Reservar justo antes de la llamada de red. Si ya existe, el registro
         # bloquea el envío y no se contacta a DGII.
         registry.reserve_send(
@@ -156,6 +171,11 @@ def main() -> int:
             case_id=args.case_id,
             tipo_ecf=tipo_ecf,
             signed_xml=signed_xml,
+            allow_rejected_retry=args.retry_rejected,
+            notes=(
+                "Reintento explícito tras rechazo DGII; intento anterior archivado."
+                if args.retry_rejected else None
+            ),
         )
         logger.info(
             "e-NCF reservado en el registro local: RNC=%s, e-NCF=%s, tipo=%s",
