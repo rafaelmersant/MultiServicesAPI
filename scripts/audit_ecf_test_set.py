@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import argparse
@@ -6,21 +5,26 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from ecf.test_run_registry import ECFTestRegistry
 from ecf.test_set_loader import certification_order, load_test_set
 
 
 DEFAULT_EXCEL = "test_data/132018559-07102026102146.xlsx"
+DEFAULT_REGISTRY_DB = "test_data/ecf/test_run_registry_cert.sqlite3"
 
 
-def print_case(case, registry, tipo_ecf: str) -> bool:
-    """
-    Imprime el estado de un caso.
-    Devuelve True si ya existe en el registro.
-    """
-    # En este conjunto, CasoPrueba comienza con el RNC de 9 dígitos.
+def resolve_project_path(value: str) -> Path:
+    """Resolve relative paths from the project root."""
+    path = Path(value)
+    return path if path.is_absolute() else PROJECT_ROOT / path
+
+
+def print_case(case, registry: ECFTestRegistry, tipo_ecf: str) -> bool:
+    """Print the local status for a test case; return whether it is registered."""
+    # In this test set, CasoPrueba starts with the 9-digit issuer RNC.
     rnc = case.case_id[:9]
     record = registry.get(rnc, case.encf)
 
@@ -40,18 +44,15 @@ def print_case(case, registry, tipo_ecf: str) -> bool:
         )
         return True
 
-    print(
-        f"{case.case_id} | {tipo_ecf} | {case.encf} | "
-        "PENDIENTE DE REGISTRO"
-    )
+    print(f"{case.case_id} | {tipo_ecf} | {case.encf} | PENDIENTE DE REGISTRO")
     return False
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Audita los casos del Excel de DGII contra el registro SQLite. "
-            "No envía documentos."
+            "Audita los casos del Excel contra un registro SQLite local. "
+            "No envía documentos ni consulta DGII."
         )
     )
     parser.add_argument(
@@ -59,26 +60,45 @@ def main() -> int:
         default=DEFAULT_EXCEL,
         help="Ruta al Excel oficial del conjunto de pruebas.",
     )
+    parser.add_argument(
+        "--registry-db",
+        default=DEFAULT_REGISTRY_DB,
+        help=(
+            "Ruta de la base SQLite. Por defecto usa el registro independiente "
+            "de certificación, sin modificar el registro histórico."
+        ),
+    )
     args = parser.parse_args()
 
-    excel_path = Path(args.excel)
+    excel_path = resolve_project_path(args.excel)
+    registry_path = resolve_project_path(args.registry_db)
+
     if not excel_path.is_file():
         print(f"ERROR: no existe el Excel: {excel_path}")
         return 1
+    if not registry_path.is_file():
+        print(
+            "ERROR: no existe el registro SQLite indicado: "
+            f"{registry_path}\n"
+            "No se creó ningún registro. Inicialízalo explícitamente antes de auditar."
+        )
+        return 1
 
     summary = load_test_set(excel_path)
-    registry = ECFTestRegistry()
+    registry = ECFTestRegistry(registry_path)
 
-    # Los 21 casos principales, excluyendo los cuatro E32
-    # que se procesan mediante RFCE en este conjunto.
+    # The 21 main ECF cases exclude the four E32 cases sent as RFCE.
     primary_cases = certification_order(summary)
 
-    print("\n=== ECF PRINCIPALES ===")
+    print(f"Excel: {excel_path}")
+    print(f"Registro local: {registry_path}")
+    print("NOTA: esta auditoría solo consulta SQLite; no confirma el estado real en DGII.\n")
+
+    print("=== ECF PRINCIPALES ===")
     print("Caso | Tipo | e-NCF | Estado local | Resultado DGII")
 
     registered_ecf = 0
     pending_ecf = []
-
     for case in primary_cases:
         if print_case(case, registry, case.tipo_ecf):
             registered_ecf += 1
@@ -88,7 +108,6 @@ def main() -> int:
     print("\n=== RFCE ===")
     registered_rfce = 0
     pending_rfce = []
-
     for case in summary.rfce_cases:
         if print_case(case, registry, "RFCE-32"):
             registered_rfce += 1
@@ -96,9 +115,9 @@ def main() -> int:
             pending_rfce.append(case)
 
     print("\n=== RESUMEN ===")
-    print(f"ECF principales registrados: {registered_eccf(registered_ecf)}")
+    print(f"ECF principales registrados: {registered_ecf}/{len(primary_cases)}")
     print(f"ECF principales pendientes: {len(pending_ecf)}")
-    print(f"RFCE registrados: {registered_rfce}/4")
+    print(f"RFCE registrados: {registered_rfce}/{len(summary.rfce_cases)}")
     print(f"RFCE pendientes: {len(pending_rfce)}")
 
     print("\n=== SIGUIENTE CASO ECF A REVISAR ===")
@@ -108,18 +127,19 @@ def main() -> int:
         print(f"Tipo e-CF: {case.tipo_ecf}")
         print(f"e-NCF: {case.encf}")
         print(
-            "Este caso no aparece en SQLite. Antes de enviarlo, "
-            "confirma que no se haya enviado por otro medio y que "
-            "su XML firmado esté preparado."
+            "Este caso no aparece en el registro local. Antes de enviarlo, "
+            "confirma que no se haya enviado ya a DGII por otro medio y que "
+            "su XML esté preparado y validado."
         )
     else:
-        print("No quedan casos ECF principales sin registrar.")
+        print("No quedan casos ECF principales sin registrar en este SQLite.")
+
+    if pending_rfce:
+        case = pending_rfce[0]
+        print("\n=== SIGUIENTE RFCE A REVISAR ===")
+        print(f"Caso: {case.case_id} | e-NCF: {case.encf}")
 
     return 0
-
-
-def registered_eccf(count: int) -> str:
-    return f"{count}/21"
 
 
 if __name__ == "__main__":
