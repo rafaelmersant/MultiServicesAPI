@@ -22,6 +22,7 @@ class Settings:
     certificate_path: Path
     certificate_password: str
     expected_tax_id: str | None
+    trusted_ca_path: Path | None
     reception_base_url: str
     result_base_url: str
     trackids_base_url: str
@@ -46,6 +47,7 @@ class Settings:
             raise ConfigurationError("DGII_TIMEOUT_SECONDS debe ser positivo.")
 
         expected_tax_id = os.getenv("ECF_EXPECTED_TAX_ID", "").strip() or None
+        trusted_ca_path = os.getenv("ECF_TRUSTED_CA_PATH", "").strip() or None
         base_url = DGII_BASE_URLS[environment].rstrip("/")
 
         return cls(
@@ -55,6 +57,7 @@ class Settings:
             certificate_path=Path(certificate_path),
             certificate_password=certificate_password,
             expected_tax_id=expected_tax_id,
+            trusted_ca_path=Path(trusted_ca_path) if trusted_ca_path else None,
             reception_base_url=f"{base_url}/recepcion",
             result_base_url=f"{base_url}/consultaresultado",
             trackids_base_url=f"{base_url}/consultatrackids",

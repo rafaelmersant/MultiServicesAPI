@@ -5,6 +5,8 @@ class ECFError(Exception):
 class TestSetError(ECFError):
     """Error en el set de pruebas DGII."""
 
+    __test__ = False
+
 
 class DGIIClientError(ECFError):
     """Error de comunicación con DGII."""

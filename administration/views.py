@@ -8,6 +8,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from django.core.signing import dumps
 
 # Serializers
 from . import serializers
@@ -58,11 +59,20 @@ class UserLogin(generics.ListCreateAPIView):
             user = User.objects.filter(email=email, password=password)
 
             if user.count() > 0:
+                authenticated_user = user[0]
                 return Response({"id": user[0].id,
                                  "email": user[0].email,
                                  "name": user[0].name,
                                  "role": user[0].userRole,
-                                 "companyId": user[0].company.id},
+                                 "companyId": user[0].company.id,
+                                 "apiToken": dumps(
+                                     {
+                                         "user_id": authenticated_user.id,
+                                         "company_id": authenticated_user.company_id,
+                                     },
+                                     salt="ecf-api",
+                                     compress=True,
+                                 )},
                                 status=status.HTTP_200_OK)
 
             return Response("null", status=status.HTTP_404_NOT_FOUND)

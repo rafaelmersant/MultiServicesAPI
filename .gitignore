@@ -41,6 +41,14 @@ administration/PostulacionFirmada.xml
 .venv/
 
 test_data/
-tests/
 
 test_set_inventory.json
+
+# Local certification artifacts and sensitive runtime data (never deploy).
+/output/
+/tmp/
+/backups/
+*.sqlite3
+.env.*
+!.env.example
+!*.env.example

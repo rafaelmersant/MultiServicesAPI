@@ -1,0 +1,20 @@
+# Isolated runtime: excludes old development tools (pipenv/pipreqs/wrapt).
+Django==4.0.3
+django-cors-headers==3.11.0
+django-debug-toolbar==3.2.4
+django-filter==21.1
+djangorestframework==3.13.1
+djangorestframework-simplejwt==5.1.0
+PyJWT==2.3.0
+certifi>=2023.11.17
+requests==2.34.2
+python-dotenv>=1,<2
+cryptography==46.0.7
+signxml==4.4.0
+lxml==6.1.0
+openpyxl>=3.1,<4
+reportlab==4.5.1
+qrcode[pil]==8.2
+pypdf==6.21.1
+xmltodict>=0.13,<2
+gunicorn>=22,<24; sys_platform != "win32"

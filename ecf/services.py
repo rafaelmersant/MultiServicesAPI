@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from .models import (
+from .test_models import (
     TestCase,
     TestSetSummary,
 )

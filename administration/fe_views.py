@@ -1,14 +1,37 @@
 import xmltodict
-import json
 import logging
 
-from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from django.http import HttpResponse
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+    renderer_classes,
+)
 from rest_framework.permissions import AllowAny
+from rest_framework.renderers import BaseRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
+from ecf.inbound import InboundDocumentError, receive_commercial_approval, receive_ecf
+from ecf.inbound_auth import (
+    ECFAuthenticationConfigError,
+    ECFAuthenticationError,
+    issue_seed,
+    validate_seed,
+    verify_receiver_authorization,
+)
 
 logger = logging.getLogger(__name__)
+
+
+class DGIIXMLRenderer(BaseRenderer):
+    media_type = "application/xml"
+    format = "xml"
+    charset = None
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return data or b""
 
 
 # ==========================================================
@@ -17,17 +40,29 @@ logger = logging.getLogger(__name__)
 # /api/api/v1/fe/autenticacion/api/semilla
 # ==========================================================
 @csrf_exempt
-@api_view(['POST', 'GET'])
+@api_view(['GET'])
+@renderer_classes([JSONRenderer, DGIIXMLRenderer])
 @authentication_classes([])
 @permission_classes([AllowAny])
 def dgii_semilla(request):
+    return issue_seed()
 
-    logger.info("DGII AUTENTICACION HIT")
 
-    return Response({
-        "status": "OK",
-        "message": "Endpoint autenticacion disponible"
-    }, status=status.HTTP_200_OK)
+@csrf_exempt
+@api_view(['POST'])
+@renderer_classes([JSONRenderer, DGIIXMLRenderer])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def dgii_validacion_certificado(request):
+    try:
+        result = validate_seed(request)
+        if isinstance(result, HttpResponse):
+            return result
+        return Response(result, status=status.HTTP_200_OK)
+    except ECFAuthenticationConfigError as exc:
+        return Response({"status": "error", "message": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    except ECFAuthenticationError as exc:
+        return Response({"status": "error", "message": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # ==========================================================
@@ -41,31 +76,15 @@ def dgii_semilla(request):
 @authentication_classes([])
 @permission_classes([AllowAny])
 def dgii_recepcion_ecf(request):
-
     try:
-        data = request.data
-
-        logger.info("DGII RECEPCION DATA")
-        logger.info(data)
-
-        track_id = data.get("trackId")
-        estado = data.get("estado")
-
-        # 🔥 Aquí guardarás en DB luego
-        # Invoice.objects.filter(track_id=track_id).update(status=estado)
-
-        return Response({
-            "status": "received",
-            "trackId": track_id
-        }, status=status.HTTP_200_OK)
-
-    except Exception as e:
-        logger.error(str(e))
-
-        return Response({
-            "status": "error",
-            "message": str(e)
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        verify_receiver_authorization(request)
+        return receive_ecf(request)
+    except ECFAuthenticationConfigError as exc:
+        return Response({"status": "error", "message": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    except ECFAuthenticationError as exc:
+        return Response({"status": "error", "message": str(exc)}, status=status.HTTP_401_UNAUTHORIZED)
+    except InboundDocumentError as exc:
+        return Response({"status": "error", "message": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # ==========================================================
@@ -79,29 +98,15 @@ def dgii_recepcion_ecf(request):
 @authentication_classes([])
 @permission_classes([AllowAny])  
 def dgii_aprobacion_comercial(request):
-
     try:
-        data = request.data
-
-        logger.info("DGII EVENTO COMERCIAL")
-        logger.info(data)
-
-        evento = data.get("evento")
-
-        # guardar evento comercial luego
-
-        return Response({
-            "status": "evento recibido",
-            "evento": evento
-        }, status=status.HTTP_200_OK)
-
-    except Exception as e:
-        logger.error(str(e))
-
-        return Response({
-            "status": "error",
-            "message": str(e)
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        verify_receiver_authorization(request)
+        return receive_commercial_approval(request)
+    except ECFAuthenticationConfigError as exc:
+        return HttpResponse(f"Error: {exc}", content_type="text/plain; charset=utf-8", status=503)
+    except ECFAuthenticationError as exc:
+        return HttpResponse(f"Error: {exc}", content_type="text/plain; charset=utf-8", status=401)
+    except InboundDocumentError as exc:
+        return HttpResponse(f"Error: {exc}", content_type="text/plain; charset=utf-8", status=400)
 
 
 def parse_dgii_request(request):

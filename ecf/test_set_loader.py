@@ -4,7 +4,7 @@ from typing import Any
 import openpyxl
 
 from .exceptions import TestSetError
-from .models import (
+from .test_models import (
     TestCase,
     TestSetSummary,
 )
@@ -14,6 +14,20 @@ EMPTY_MARKERS = {
     None,
     "",
     "#e",
+}
+
+CERTIFICATION_SEND_ORDER = ("31", "32", "41", "43", "44", "45", "46", "47", "33", "34")
+CERTIFICATION_EXPECTED_COUNTS = {
+    "31": 4,
+    "32": 2,
+    "41": 2,
+    "43": 2,
+    "44": 2,
+    "45": 2,
+    "46": 2,
+    "47": 2,
+    "33": 1,
+    "34": 2,
 }
 
 
@@ -220,20 +234,23 @@ def certification_order(
 
     """
     Devuelve los 21 casos principales
-    en el orden de pruebas requerido.
+    en el orden de envío publicado por DGII.
 
     Primero:
         31
-        33
-        34
+        32 de DOP 250,000 o más
         41
         43
         44
         45
         46
         47
+    Después:
+        33
+        34
 
-    Después vendrán los E32/RFCE.
+    Los E32 menores de DOP 250,000 y sus RFCE se procesan en una etapa
+    posterior, según indique el portal de certificación.
     """
 
     special_32 = {
@@ -249,12 +266,23 @@ def certification_order(
         if c.case_id not in special_32
     ]
 
+    order = {
+        "31": 0,
+        "32": 1,
+        "41": 2,
+        "43": 3,
+        "44": 4,
+        "45": 5,
+        "46": 6,
+        "47": 7,
+        "33": 8,
+        "34": 9,
+    }
+
     return sorted(
         primary,
         key=lambda c: (
-            0 if c.tipo_ecf == "31"
-            else 1,
-            c.tipo_ecf,
+            order.get(c.tipo_ecf, len(order)),
             c.case_id,
         ),
     )

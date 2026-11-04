@@ -1,0 +1,17 @@
+[Unit]
+Description=MultiServices DGII certification receiver
+After=network.target
+
+[Service]
+User=ecfcert
+Group=ecfcert
+WorkingDirectory=/opt/multiservices-certification/app
+EnvironmentFile=/etc/multiservices-certification.env
+ExecStart=/opt/multiservices-certification/venv/bin/gunicorn MultiServices.wsgi:application --bind 127.0.0.1:8087 --workers 1 --threads 2 --timeout 60 --access-logfile - --error-logfile -
+Restart=on-failure
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
