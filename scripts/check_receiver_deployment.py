@@ -37,7 +37,7 @@ def main():
     headers = {}
     if args.signed_auth:
         import django
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MultiServices.settings_certification")
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MultiServices.settings")
         django.setup()
         from ecf.config import Settings
         from ecf.certificate import load_pkcs12

@@ -36,12 +36,7 @@ def test_url_reverse_does_not_break_legacy_invoices_or_dgii(name):
     assert resolve(reverse(name)).url_name == name
 
 
-def test_isolated_receiver_does_not_expose_sales_or_admin():
-    from django.test import override_settings
-    from django.urls import Resolver404
-    with override_settings(ROOT_URLCONF="MultiServices.urls_certification"):
-        assert resolve("/FE/RECEPCION/API/ECF").url_name == "dgii-recepcion-standard"
-        assert resolve(reverse("dgii-semilla-standard")).url_name == "dgii-semilla-standard"
-        for url in ("/api/v1/invoicesHeaders/", "/admin/", "/api/v1/ecf/electronic-invoices/"):
-            with pytest.raises(Resolver404):
-                resolve(url)
+def test_normal_application_exposes_both_legacy_api_and_receiver():
+    assert resolve("/api/v1/invoicesHeaders/").url_name == "invoicesheader-list"
+    assert resolve("/FE/RECEPCION/API/ECF").url_name == "dgii-recepcion-standard"
+    assert resolve("/admin/").view_name == "admin:index"
