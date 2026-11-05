@@ -11,12 +11,12 @@ from . import views
 
 router = DefaultRouter()
 router.register('products', views.ProductViewSet)
-router.register('updateData', views.UpdateDataViewSet)
-router.register('productCategories', views.ProductCategoryViewSet)
-router.register('productsStocks', views.ProductsStockViewSet)
-router.register('productsTrackingsHeader', views.ProductsTrackingHeaderViewSet)
-router.register('productsTrackings', views.ProductsTrackingViewSet)
-router.register('productsTrackingsLong', views.ProductsTrackingListLong)
+router.register('updateData', views.UpdateDataViewSet, basename="product-update-data")
+router.register('productCategories', views.ProductCategoryViewSet, basename="product-categories")
+router.register('productsStocks', views.ProductsStockViewSet, basename="products-stocks")
+router.register('productsTrackingsHeader', views.ProductsTrackingHeaderViewSet, basename="products-tracking-header")
+router.register('productsTrackings', views.ProductsTrackingViewSet, basename="products-tracking")
+router.register('productsTrackingsLong', views.ProductsTrackingListLong, basename="products-tracking-long")
 router.register('purchaseOrders', views.PurchaseOrderViewSet)
 router.register('productsProviders', views.ProductsProviderReport)
 
