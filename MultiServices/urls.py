@@ -15,7 +15,7 @@ from administration.fe_views import (
 )
 
 urlpatterns = [
-    re_path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls),
     re_path(r'^api/v1/', include('sales.urls')),
     re_path(r'^api/v1/', include('administration.urls')),
     re_path(r'^api/v1/', include('products.urls')),
