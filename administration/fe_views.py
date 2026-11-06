@@ -60,8 +60,10 @@ def dgii_validacion_certificado(request):
             return result
         return Response(result, status=status.HTTP_200_OK)
     except ECFAuthenticationConfigError as exc:
+        logger.warning("DGII_AUTH_REJECTED status=503 reason=%s", str(exc))
         return Response({"status": "error", "message": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
     except ECFAuthenticationError as exc:
+        logger.warning("DGII_AUTH_REJECTED status=400 reason=%s", str(exc))
         return Response({"status": "error", "message": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
 

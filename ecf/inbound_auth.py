@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import logging
 import os
 import secrets
 from datetime import datetime, timedelta, timezone as datetime_timezone
@@ -26,6 +27,7 @@ SEED_TTL = timedelta(minutes=5)
 TOKEN_TTL = timedelta(hours=1)
 TOKEN_ISSUER = "MultiServicesAPI"
 TOKEN_AUDIENCE = "ecf-receiver"
+logger = logging.getLogger(__name__)
 
 
 class ECFAuthenticationError(InboundDocumentError):
@@ -104,10 +106,13 @@ def _signed_seed_parts(request) -> tuple[str, str, datetime]:
     certificates = root.xpath(".//*[local-name()='X509Certificate']/text()")
     if not certificates:
         raise ECFAuthenticationError("La firma no contiene certificado X.509.")
+    stage = "certificate_decode"
+    certificate = None
     try:
         der = base64.b64decode("".join(certificates[0].split()), validate=True)
         certificate = x509.load_der_x509_certificate(der)
         certificate_pem = certificate.public_bytes(serialization.Encoding.PEM)
+        stage = "xml_signature"
         XMLVerifier().verify(xml_data, x509_cert=certificate_pem)
         trusted_ca_path = os.getenv("ECF_AUTH_TRUSTED_CA_PATH", "").strip()
         if not trusted_ca_path:
@@ -118,10 +123,15 @@ def _signed_seed_parts(request) -> tuple[str, str, datetime]:
             x509.load_der_x509_certificate(base64.b64decode("".join(value.split()), validate=True))
             for value in certificates[1:]
         ]
+        stage = "certificate_chain"
         _verify_certificate_chain(certificate, intermediates, trusted_ca_path)
     except ECFAuthenticationConfigError:
         raise
     except Exception as exc:
+        # Never log the signed XML, seed, bearer token or private key.
+        issuer = certificate.issuer.rfc4514_string() if certificate is not None else "unknown"
+        detail = " ".join(str(exc).split())[:400] if stage == "certificate_chain" else type(exc).__name__
+        logger.warning("DGII_AUTH_VERIFY_FAILED stage=%s issuer=%s error=%s", stage, issuer, detail)
         raise ECFAuthenticationError("La firma de la semilla no es válida.") from exc
     fingerprint = certificate.fingerprint(hashes.SHA256()).hex()
     return value, fingerprint, issued_at
