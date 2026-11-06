@@ -7,6 +7,7 @@ import hashlib
 import logging
 import os
 import secrets
+from pathlib import Path
 from datetime import datetime, timedelta, timezone as datetime_timezone
 
 import jwt
@@ -141,6 +142,28 @@ def _signed_seed_parts(request) -> tuple[str, str, datetime]:
                 "DGII_AUTH_SIGNATURE_INFO method=%s c14n=%s certificates=%s signxml=%s lxml=%s cryptography=%s",
                 method, canonicalization, len(certificates), version("signxml"), version("lxml"), version("cryptography"),
             )
+            diagnostic_dir = os.getenv("ECF_AUTH_DIAGNOSTIC_DIR", "").strip()
+            if diagnostic_dir:
+                # Explicit opt-in: retain original bytes privately for offline
+                # reproduction. Never use MEDIA_ROOT or print XML in logs.
+                try:
+                    folder = Path(diagnostic_dir)
+                    from django.conf import settings as django_settings
+                    if not folder.is_absolute() or folder.resolve().is_relative_to(Path(django_settings.BASE_DIR).resolve()):
+                        raise ValueError("Diagnostic directory must be absolute and outside the project")
+                    folder.mkdir(mode=0o700, parents=True, exist_ok=True)
+                    if os.name == "posix" and folder.stat().st_mode & 0o077:
+                        raise ValueError("Diagnostic directory must have mode 700")
+                    filename = "dgii-seed-" + hashlib.sha256(xml_data).hexdigest()[:16] + ".xml"
+                    file_path = folder / filename
+                    fd = os.open(file_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                    with os.fdopen(fd, "wb") as stream:
+                        stream.write(xml_data)
+                    logger.warning("DGII_AUTH_DIAGNOSTIC_SAVED file=%s", filename)
+                except FileExistsError:
+                    pass
+                except Exception as diagnostic_error:
+                    logger.warning("DGII_AUTH_DIAGNOSTIC_FAILED error=%s", type(diagnostic_error).__name__)
         raise ECFAuthenticationError("La firma de la semilla no es válida.") from exc
     fingerprint = certificate.fingerprint(hashes.SHA256()).hex()
     return value, fingerprint, issued_at
