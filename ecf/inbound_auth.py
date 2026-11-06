@@ -130,8 +130,17 @@ def _signed_seed_parts(request) -> tuple[str, str, datetime]:
     except Exception as exc:
         # Never log the signed XML, seed, bearer token or private key.
         issuer = certificate.issuer.rfc4514_string() if certificate is not None else "unknown"
-        detail = " ".join(str(exc).split())[:400] if stage == "certificate_chain" else type(exc).__name__
+        detail = " ".join(str(exc).split())[:400] if stage in {"xml_signature", "certificate_chain"} else type(exc).__name__
         logger.warning("DGII_AUTH_VERIFY_FAILED stage=%s issuer=%s error=%s", stage, issuer, detail)
+        if stage == "xml_signature":
+            from importlib.metadata import version
+            ns = {"ds": "http://www.w3.org/2000/09/xmldsig#"}
+            method = root.xpath("string(.//ds:SignedInfo/ds:SignatureMethod/@Algorithm)", namespaces=ns)
+            canonicalization = root.xpath("string(.//ds:SignedInfo/ds:CanonicalizationMethod/@Algorithm)", namespaces=ns)
+            logger.warning(
+                "DGII_AUTH_SIGNATURE_INFO method=%s c14n=%s certificates=%s signxml=%s lxml=%s cryptography=%s",
+                method, canonicalization, len(certificates), version("signxml"), version("lxml"), version("cryptography"),
+            )
         raise ECFAuthenticationError("La firma de la semilla no es válida.") from exc
     fingerprint = certificate.fingerprint(hashes.SHA256()).hex()
     return value, fingerprint, issued_at
