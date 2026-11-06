@@ -50,7 +50,15 @@ def main():
         response = request("POST", "/fe/autenticacion/api/validacioncertificado",
                            files={"xml": ("seed.xml", signed, "application/xml")}, headers={"Accept": "application/json"})
         if response.status_code != 200:
-            raise ValueError(f"Signed authentication failed: HTTP {response.status_code}; inspect server logs and trusted CA chain.")
+            message = "inspect server logs and trusted CA chain"
+            if "json" in response.headers.get("Content-Type", ""):
+                try:
+                    result = response.json()
+                    if isinstance(result, dict) and result.get("status") == "error":
+                        message = str(result.get("message") or message)[:500]
+                except ValueError:
+                    pass
+            raise ValueError(f"Signed authentication failed: HTTP {response.status_code}; {message}")
         result = response.json()
         if not all(result.get(key) for key in ("token", "expira", "expedido")):
             raise ValueError("Incomplete authentication response.")

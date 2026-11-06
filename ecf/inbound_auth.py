@@ -57,7 +57,7 @@ def issue_seed() -> HttpResponse:
     )
 
     root = etree.Element(
-        "semillamodel",
+        "SemillaModel",
         nsmap={
             "xsi": "http://www.w3.org/2001/XMLSchema-instance",
             "xsd": "http://www.w3.org/2001/XMLSchema",
@@ -171,7 +171,7 @@ def validate_seed(request):
     }
 
     if "application/xml" in request.headers.get("Accept", "").casefold():
-        root = etree.Element("respuestaautenticacion")
+        root = etree.Element("RespuestaAutenticacion")
         for key, content in result.items():
             etree.SubElement(root, key).text = content
         payload = etree.tostring(root, encoding="UTF-8", xml_declaration=True)

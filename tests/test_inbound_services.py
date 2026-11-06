@@ -243,13 +243,15 @@ def test_seed_endpoint_returns_xml_and_persists_only_seed_hash():
 
     assert response.status_code == 200
     root = etree.fromstring(response.content)
+    assert root.tag == "SemillaModel"
     value = root.xpath("./*[local-name()='valor']/text()")[0]
     assert len(base64.b64decode(value)) == 32
     assert create.call_args.kwargs["seed_sha256"] == hashlib.sha256(value.encode("ascii")).hexdigest()
     assert "seed" not in create.call_args.kwargs
 
 
-def test_valid_signed_seed_returns_one_hour_bearer_token(monkeypatch):
+@pytest.mark.parametrize("accept", ["application/json", "application/xml"])
+def test_valid_signed_seed_returns_one_hour_bearer_token(monkeypatch, accept):
     token_secret = "test-only-token-secret-0123456789abcdef"
     monkeypatch.setenv("ECF_AUTH_TOKEN_SECRET", token_secret)
     monkeypatch.setenv("ECF_AUTH_TRUSTED_CA_PATH", "test-ca.pem")
@@ -269,16 +271,22 @@ def test_valid_signed_seed_returns_one_hour_bearer_token(monkeypatch):
             "/fe/autenticacion/api/validacioncertificado",
             {"xml": SimpleUploadedFile("seed.xml", xml_data, content_type="text/xml")},
             format="multipart",
-            HTTP_ACCEPT="application/json",
+            HTTP_ACCEPT=accept,
         )
 
-    assert response.status_code == 200, response.data
-    assert set(response.data) == {"token", "expira", "expedido"}
+    assert response.status_code == 200
+    if accept == "application/xml":
+        root = etree.fromstring(response.content)
+        assert root.tag == "RespuestaAutenticacion"
+        data = {node.tag: node.text for node in root}
+    else:
+        data = response.data
+    assert set(data) == {"token", "expira", "expedido"}
     assert filters.call_args_list[0].kwargs["seed_sha256"] == hashlib.sha256(
         base64.b64encode(bytes(range(32)))
     ).hexdigest()
     claims = jwt.decode(
-        response.data["token"],
+        data["token"],
         token_secret,
         algorithms=["HS256"],
         issuer="MultiServicesAPI",
