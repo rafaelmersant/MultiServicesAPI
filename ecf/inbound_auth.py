@@ -19,6 +19,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 from lxml import etree
 from .xml_verifier import ReceiverXMLVerifier
+from .certificate_trust import certification_pinning_enabled
 
 from .inbound import InboundDocumentError, _verify_certificate_chain
 from .models import ECFAuthenticationChallenge
@@ -116,7 +117,7 @@ def _signed_seed_parts(request) -> tuple[str, str, datetime]:
         stage = "xml_signature"
         ReceiverXMLVerifier().verify(xml_data, x509_cert=certificate_pem)
         trusted_ca_path = os.getenv("ECF_AUTH_TRUSTED_CA_PATH", "").strip()
-        if not trusted_ca_path:
+        if not trusted_ca_path and not certification_pinning_enabled():
             raise ECFAuthenticationConfigError(
                 "Configura ECF_AUTH_TRUSTED_CA_PATH con las CA confiables antes de habilitar autenticación."
             )

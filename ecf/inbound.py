@@ -20,6 +20,7 @@ from .xml_verifier import ReceiverXMLVerifier
 from administration.models import Company
 
 from .certificate import load_pkcs12
+from .certificate_trust import certification_pinning_enabled, verify_certification_pin
 from .config import Settings
 from .models import ReceivedElectronicDocument
 from .signing import sign_xml
@@ -35,6 +36,10 @@ class InboundDocumentError(ValueError):
 
 
 def _verify_certificate_chain(certificate, intermediates, trusted_ca_path: str | Path) -> None:
+    # Explicitly authorized leaf fingerprint is an alternative trust anchor
+    # only in cert. Signature and digest were already verified by the caller.
+    if verify_certification_pin(certificate):
+        return
     ca_data = Path(trusted_ca_path).read_bytes()
     try:
         trust_anchors = x509.load_pem_x509_certificates(ca_data)
@@ -81,7 +86,7 @@ def _verify_embedded_signature(xml_data: bytes) -> None:
         signer_pem = certificate.public_bytes(serialization.Encoding.PEM)
         ReceiverXMLVerifier().verify(xml_data, x509_cert=signer_pem)
         trusted_ca_path = os.getenv("ECF_TRUSTED_CA_PATH", "").strip()
-        if not trusted_ca_path:
+        if not trusted_ca_path and not certification_pinning_enabled():
             raise InboundDocumentError("Configura ECF_TRUSTED_CA_PATH con la raíz DGII antes de habilitar la recepción.")
         try:
             intermediates = [
