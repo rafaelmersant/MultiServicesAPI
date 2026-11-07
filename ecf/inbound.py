@@ -15,7 +15,7 @@ from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.utils import timezone
 from lxml import etree
-from signxml import XMLVerifier
+from .xml_verifier import ReceiverXMLVerifier
 
 from administration.models import Company
 
@@ -79,7 +79,7 @@ def _verify_embedded_signature(xml_data: bytes) -> None:
         der = base64.b64decode("".join(certificates[0].split()), validate=True)
         certificate = x509.load_der_x509_certificate(der)
         signer_pem = certificate.public_bytes(serialization.Encoding.PEM)
-        XMLVerifier().verify(xml_data, x509_cert=signer_pem)
+        ReceiverXMLVerifier().verify(xml_data, x509_cert=signer_pem)
         trusted_ca_path = os.getenv("ECF_TRUSTED_CA_PATH", "").strip()
         if not trusted_ca_path:
             raise InboundDocumentError("Configura ECF_TRUSTED_CA_PATH con la raíz DGII antes de habilitar la recepción.")

@@ -18,7 +18,7 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
 from lxml import etree
-from signxml import XMLVerifier
+from .xml_verifier import ReceiverXMLVerifier
 
 from .inbound import InboundDocumentError, _verify_certificate_chain
 from .models import ECFAuthenticationChallenge
@@ -114,7 +114,7 @@ def _signed_seed_parts(request) -> tuple[str, str, datetime]:
         certificate = x509.load_der_x509_certificate(der)
         certificate_pem = certificate.public_bytes(serialization.Encoding.PEM)
         stage = "xml_signature"
-        XMLVerifier().verify(xml_data, x509_cert=certificate_pem)
+        ReceiverXMLVerifier().verify(xml_data, x509_cert=certificate_pem)
         trusted_ca_path = os.getenv("ECF_AUTH_TRUSTED_CA_PATH", "").strip()
         if not trusted_ca_path:
             raise ECFAuthenticationConfigError(
