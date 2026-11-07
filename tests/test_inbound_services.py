@@ -110,28 +110,38 @@ def test_receiver_accepts_signed_ecf_and_returns_arecf():
     assert b"<Estado>0</Estado>" in response.content
 
 
-def test_receiver_accepts_commercial_approval_and_returns_ok():
+@pytest.mark.parametrize("registered", [True, False])
+def test_receiver_accepts_commercial_approval_and_returns_ok(registered):
     xml_data = b"""<?xml version='1.0' encoding='UTF-8'?>
     <ACECF><DetalleAprobacionComercial>
       <Version>1.0</Version><RNCEmisor>132018559</RNCEmisor>
       <eNCF>E310000000001</eNCF><FechaEmision>17-10-2026</FechaEmision>
-      <MontoTotal>100.00</MontoTotal><RNCComprador>132018559</RNCComprador>
+      <MontoTotal>100.00</MontoTotal><RNCComprador>101000001</RNCComprador>
       <Estado>1</Estado><FechaHoraAprobacionComercial>17-10-2026 12:00:00</FechaHoraAprobacionComercial>
     </DetalleAprobacionComercial></ACECF>"""
     with (
         patch("ecf.inbound.Company.objects.filter") as company_filter,
-        patch.object(ReceivedElectronicDocument.objects, "get_or_create", return_value=(object(), True)),
+        patch.object(ReceivedElectronicDocument.objects, "get_or_create", return_value=(object(), True)) as save,
         patch("ecf.inbound._verify_embedded_signature"),
     ):
-        company_filter.return_value.first.return_value = SimpleNamespace(rnc="132018559")
+        company = SimpleNamespace(rnc="132018559") if registered else None
+        company_filter.return_value.first.return_value = company
         response = APIClient().post(
             "/fe/aprobacioncomercial/api/ecf",
             {"xml": SimpleUploadedFile("acecf.xml", xml_data, content_type="text/xml")},
             format="multipart",
         )
 
+    company_filter.assert_called_once_with(rnc="132018559")
+    if not registered:
+        assert response.status_code == 400
+        assert b"RNCEmisor" in response.content
+        save.assert_not_called()
+        return
     assert response.status_code == 200
     assert response.content == b"OK"
+    assert save.call_args.kwargs["company"] is company
+    assert save.call_args.kwargs["defaults"]["buyer_rnc"] == "101000001"
 
 
 def test_inbound_signature_verification_fails_closed_without_dgii_root(monkeypatch):

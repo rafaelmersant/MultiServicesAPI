@@ -214,9 +214,10 @@ def receive_commercial_approval(request) -> HttpResponse:
     encf = _value(root, ".//*[local-name()='DetalleAprobacionComercial']/*[local-name()='eNCF']")
     if not issuer_rnc or not buyer_rnc or not encf:
         raise InboundDocumentError("Faltan RNCEmisor, RNCComprador o eNCF en el ACECF.")
-    company = Company.objects.filter(rnc=buyer_rnc).first()
+    # The buyer sends its approval to the issuer of the original e-CF.
+    company = Company.objects.filter(rnc=issuer_rnc).first()
     if company is None:
-        raise InboundDocumentError("El RNCComprador no corresponde a una empresa registrada.")
+        raise InboundDocumentError("El RNCEmisor no corresponde a una empresa registrada.")
     digest = hashlib.sha256(xml_data).hexdigest()
     try:
         ReceivedElectronicDocument.objects.get_or_create(
