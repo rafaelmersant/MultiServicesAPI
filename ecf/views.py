@@ -51,6 +51,41 @@ class ECFCompanyViewSet(ModelViewSet):
     def get_serializer_class(self):
         return ElectronicInvoiceSerializer
 
+    @action(detail=False, methods=("get",), url_path="sale-status")
+    def sale_status(self, request):
+        invoice_id = request.query_params.get("invoice", "")
+        if not str(invoice_id).isdigit():
+            raise ValidationError("Indica una venta guardada.")
+        record = self.get_queryset().filter(environment="prod", invoice_id=invoice_id).first()
+        return Response({"record": self.get_serializer(record).data if record else None})
+
+    @action(detail=False, methods=("post",), url_path="checkout-sale")
+    def checkout_sale(self, request):
+        from .checkout import prepare_checkout, run_checkout
+        invoice_id = request.data.get("invoice")
+        if not str(invoice_id or "").isdigit():
+            raise ValidationError("Indica una venta guardada.")
+        try:
+            record = prepare_checkout(request.user.company_id, invoice_id, str(request.data.get("document_type", "")), request.data.get("payload", {}))
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+        message = "La venta quedó guardada; revisa sus líneas antes de continuar desde Facturación e-CF."
+        if request.data.get("process", True) is True:
+            try:
+                message = run_checkout(record)
+            except (ECFError, ValueError, RuntimeError) as exc:
+                message = str(exc)
+                ElectronicInvoice.objects.filter(pk=record.pk).update(last_error=message[:2000])
+            except Exception:
+                import logging
+                logging.getLogger(__name__).exception("ECF_CHECKOUT_FAILED record=%s", record.pk)
+                message = "La venta está guardada. Revisa el registro e-CF y los logs antes de continuar; no crees otra venta."
+                ElectronicInvoice.objects.filter(pk=record.pk).update(last_error=message)
+        record.refresh_from_db()
+        return Response({"record": self.get_serializer(record).data,
+                         "pending": record.status not in {"accepted", "accepted_conditional"} or not bool(record.representation_pdf),
+                         "message": message or record.last_error or record.dgii_status or "Pendiente de respuesta DGII; continúa desde Facturación e-CF."})
+
     @action(detail=False, methods=("get",), url_path="sale-representation")
     def sale_representation(self, request):
         invoice_id = request.query_params.get("invoice", "")
@@ -424,7 +459,7 @@ class ECFCompanyViewSet(ModelViewSet):
 
 class ECFSequenceViewSet(ModelViewSet):
     authentication_classes = (ECFUserAuthentication,)
-    permission_classes = (IsAuthenticated, ECFAdminOrOwnerPermission)
+    permission_classes = (IsAuthenticated, ECFCompanyAccessPermission)
     serializer_class = ElectronicInvoiceSequenceSerializer
     http_method_names = ("get", "post", "head", "options")
 

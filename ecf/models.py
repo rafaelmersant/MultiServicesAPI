@@ -143,6 +143,7 @@ class ElectronicInvoice(models.Model):
     creation_date = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     payload = models.JSONField(default=dict, blank=True)
+    checkout_in_progress = models.BooleanField(default=False)
     raw_xml = models.TextField(blank=True)
     signed_xml = models.TextField(blank=True)
     representation_pdf = models.FileField(upload_to="ecf/representations/", blank=True)

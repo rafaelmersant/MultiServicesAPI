@@ -216,7 +216,7 @@ def _linked_sale_values(record: ElectronicInvoice) -> dict[str, str]:
         raise ECFWorkflowError("Los e-CF tipo 31 y 32 requieren una factura fuente real.")
     if invoice.company_id != record.company_id or invoice.invoiceStatus:
         raise ECFWorkflowError("La factura fuente no está activa para esta empresa.")
-    if invoice.paymentMethod not in {"CASH", "CREDIT"}:
+    if invoice.paymentMethod not in {"CASH", "CREDIT", "CARD", "TRANS"}:
         raise ECFWorkflowError("La factura fuente no tiene forma de pago clasificable.")
 
     company = record.company
@@ -251,7 +251,7 @@ def _linked_sale_values(record: ElectronicInvoice) -> dict[str, str]:
                 ZoneInfo("America/Santo_Domingo")
             ).strftime("%d-%m-%Y"),
             "TipoIngresos": values.get("TipoIngresos", "01"),
-            "TipoPago": "1" if invoice.paymentMethod == "CASH" else "2",
+            "TipoPago": "2" if invoice.paymentMethod == "CREDIT" else "1",
         }
     )
     if customer.firstName or customer.lastName:

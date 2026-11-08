@@ -1,5 +1,9 @@
 # Preparación y operación e-CF en producción
 
+La entrada principal para E31/E32 es ahora el selector NCF de la factura habitual:
+ver [Facturación desde Caja](FACTURACION_ECF_CAJA.md). Los pasos manuales de este
+documento se conservan como alternativa para registros pendientes.
+
 ## Estado de esta entrega
 
 Se habilitan borradores productivos, reserva controlada, construcción/validación

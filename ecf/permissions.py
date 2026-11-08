@@ -19,4 +19,11 @@ class ECFCompanyAccessPermission(ECFAdminOrOwnerPermission):
     def has_permission(self, request, view):
         if request.method in {"GET", "HEAD", "OPTIONS"}:
             return bool(request.user and request.user.is_authenticated)
+        if getattr(view, "action", "") in {"checkout_sale", "reserve_encf", "build_xml", "sign", "build_rfce", "sign_rfce", "send_rfce", "send", "query_result", "build_representation", "update_draft"}:
+            return bool(request.user and request.user.is_authenticated and getattr(request.user, "role", None) in {"Admin", "Owner", "Caja"})
         return super().has_permission(request, view)
+
+    def has_object_permission(self, request, view, obj):
+        if request.method == "POST" and getattr(request.user, "role", None) == "Caja":
+            return obj.environment == "prod" and obj.document_type in {"31", "32"} and bool(obj.invoice_id)
+        return True
