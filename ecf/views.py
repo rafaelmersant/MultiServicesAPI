@@ -51,6 +51,20 @@ class ECFCompanyViewSet(ModelViewSet):
     def get_serializer_class(self):
         return ElectronicInvoiceSerializer
 
+    @action(detail=False, methods=("get",), url_path="sale-thermal-data")
+    def sale_thermal_data(self, request):
+        from .thermal import thermal_representation
+        invoice_id = request.query_params.get("invoice", "")
+        if not str(invoice_id).isdigit():
+            raise ValidationError("Indica una venta guardada.")
+        record = self.get_queryset().filter(environment="prod", invoice_id=invoice_id).first()
+        if record is None:
+            raise ValidationError("No existe un e-CF de esta venta para tu empresa.")
+        try:
+            return Response(thermal_representation(record))
+        except (ECFError, ValueError, ArithmeticError, etree.XMLSyntaxError) as exc:
+            raise ValidationError(str(exc)) from exc
+
     @action(detail=False, methods=("get",), url_path="sale-status")
     def sale_status(self, request):
         invoice_id = request.query_params.get("invoice", "")
