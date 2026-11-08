@@ -43,8 +43,8 @@ def main():
         from ecf.certificate import load_pkcs12
         from ecf.signing import sign_xml
         cfg = Settings.from_env()
-        if cfg.environment != "cert":
-            raise ValueError("This check requires DGII_ENVIRONMENT=cert.")
+        if cfg.environment not in {"cert", "prod"}:
+            raise ValueError("This check requires DGII_ENVIRONMENT=cert or prod.")
         certificate = load_pkcs12(cfg.certificate_path, cfg.certificate_password)
         signed = sign_xml(seed, certificate)
         response = request("POST", "/fe/autenticacion/api/validacioncertificado",
