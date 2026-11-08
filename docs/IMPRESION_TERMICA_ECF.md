@@ -7,10 +7,14 @@ En una venta E31/E32 aceptada o aceptada condicional, pulsar el mismo icono de
 impresora que las facturas tradicionales. Se prepara el contenido fiscal y se
 abre el diálogo de impresión. El botón **PDF e-CF** sigue disponible.
 
-Seleccionar impresora térmica, papel de **80 mm**, escala **100%**, y desactivar
-encabezados/pies del navegador. El contenido ocupa 72 mm; el largo lo determina
-el controlador de la impresora. La plantilla no está calibrada para rollo de
-58 mm: no reducir automáticamente hasta volver ilegible el QR.
+Seleccionar la impresora y el mismo papel usado en la muestra de calibración,
+escala **100%**, y desactivar encabezados/pies del navegador. El perfil aplica
+internamente la ampliación 1.39 que el usuario comprobó en el diálogo y agrega
+2 mm de margen izquierdo sin volver a escalar manualmente. El contenido base
+de 76 mm pasa a 105.64 mm; el contenedor reserva 108 mm para contenido y margen.
+Este perfil debe utilizarse con un papel/controlador que admita ese ancho efectivo;
+no es un perfil universal para rollos de 80 o 58 mm. El largo lo determina el
+controlador. Validar la impresión física con el mismo papel de la calibración.
 
 Los datos se obtienen de un endpoint autenticado y limitado a la empresa del
 usuario. La plantilla usa razón social, dirección, e-NCF, fechas, comprador E31,

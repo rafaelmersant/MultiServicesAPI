@@ -51,6 +51,31 @@ class ECFCompanyViewSet(ModelViewSet):
     def get_serializer_class(self):
         return ElectronicInvoiceSerializer
 
+    @action(detail=False, methods=("get", "post"), url_path="customer-fiscal-id")
+    def customer_fiscal_id(self, request):
+        from administration.models import Customer
+        from .customer_identity import customer_fiscal_status
+        customer_id = (request.data if request.method == "POST" else request.query_params).get("customer")
+        if not str(customer_id or "").isdigit():
+            raise ValidationError("Selecciona un cliente real.")
+        with transaction.atomic():
+            customers = Customer.objects.filter(pk=customer_id, company_id=request.user.company_id)
+            if request.method == "POST":
+                customers = customers.select_for_update()
+            customer = customers.first()
+            if customer is None:
+                raise ValidationError("El cliente no pertenece a tu empresa.")
+            if request.method == "POST":
+                result = customer_fiscal_status(customer, kind=request.data.get("identificationType", ""), number=request.data.get("identification", ""))
+                if not result["valid"]:
+                    return Response(result, status=400)
+                customer.identificationType = result["identificationType"]
+                customer.identification = result["identification"]
+                customer.save(update_fields=("identificationType", "identification"))
+            else:
+                result = customer_fiscal_status(customer)
+        return Response(result)
+
     @action(detail=False, methods=("get",), url_path="sale-thermal-data")
     def sale_thermal_data(self, request):
         from .thermal import thermal_representation

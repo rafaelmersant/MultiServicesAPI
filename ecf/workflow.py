@@ -224,6 +224,14 @@ def _linked_sale_values(record: ElectronicInvoice) -> dict[str, str]:
     buyer_raw = (customer.identification or "").strip()
     buyer_id = "".join(ch for ch in buyer_raw if ch.isdigit())
     buyer_id_valid = len(buyer_id) in {9, 11} and bool(re.fullmatch(r"[0-9-]+", buyer_raw))
+    if record.environment == ECFEnvironment.PROD and record.document_type == "31":
+        from .customer_identity import customer_fiscal_status
+        if customer.company_id != record.company_id:
+            raise ECFWorkflowError("El cliente no pertenece a la empresa de la venta.")
+        identity = customer_fiscal_status(customer)
+        if not identity["valid"]:
+            raise ECFWorkflowError(identity["message"])
+        buyer_id, buyer_id_valid = identity["identification"], True
     document_total = _money(Decimal(invoice.subtotal) - Decimal(invoice.discount))
     if document_total <= 0:
         raise ECFWorkflowError("La factura fuente tiene un total no positivo.")

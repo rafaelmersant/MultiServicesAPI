@@ -62,7 +62,7 @@ def test_record_cannot_use_another_company_environment_or_out_of_range_number(ch
 
 def sale_record():
     company = SimpleNamespace(rnc="101000001", name="EMISOR DE PRUEBA UNITARIA", address="Dirección de prueba", email="", phoneNumber="")
-    customer = SimpleNamespace(identification="101000002", firstName="CLIENTE", lastName="PRUEBA", email="", address="")
+    customer = SimpleNamespace(pk=7, company_id=1, identification="131246796", identificationType="R", firstName="CLIENTE", lastName="PRUEBA", email="", address="")
     invoice = SimpleNamespace(company_id=1, invoiceStatus="", ncf="", paymentMethod="CASH", subtotal=Decimal("236"),
                               discount=Decimal("20"), itbis=Decimal("32.95"), customer=customer,
                               creationDate=datetime(2026, 11, 8, tzinfo=timezone.utc))
