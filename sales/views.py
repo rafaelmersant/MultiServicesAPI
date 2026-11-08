@@ -2,6 +2,7 @@
 
 # Django
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db import transaction
 from django.db.models import Sum, DecimalField
 from django.db.models.functions import Coalesce
 
@@ -13,6 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from MultiServices.paginations import InvoiceListPagination, StandardResultsSetPaginationHigh
+from ecf.sale_protection import ElectronicHeaderProtection, ElectronicDetailProtection, require_editable_sale
 
 # Serializers
 from . import serializers
@@ -25,7 +27,7 @@ import datetime
 from datetime import datetime as date_format
 
 
-class InvoicesHeaderViewSet(ModelViewSet):
+class InvoicesHeaderViewSet(ElectronicHeaderProtection, ModelViewSet):
     queryset = InvoicesHeader.objects.select_related('company').select_related('customer').all()
     serializer_class = serializers.InvoicesHeaderSerializer
     pagination_class = InvoiceListPagination
@@ -92,7 +94,7 @@ class InvoicesHeaderSearchViewSet(ModelViewSet):
                          'paymentMethod', 'ncf', 'createdUser']
     
 
-class InvoicesDetailViewSet(ModelViewSet):
+class InvoicesDetailViewSet(ElectronicDetailProtection, ModelViewSet):
     queryset = InvoicesDetail.objects.select_related('product').select_related('invoice').all()
     serializer_class = serializers.InvoicesDetailSerializer
     filter_backends = [DjangoFilterBackend]
@@ -104,7 +106,7 @@ class InvoicesDetailViewSet(ModelViewSet):
         return serializers.InvoicesDetailSerializer
 
 
-class InvoicesDetailReducedViewSet(ModelViewSet):
+class InvoicesDetailReducedViewSet(ElectronicDetailProtection, ModelViewSet):
     queryset = InvoicesDetail.objects.select_related('product').all()
     serializer_class = serializers.InvoicesDetailReducedSerializer
     filter_backends = [DjangoFilterBackend]
@@ -156,7 +158,7 @@ class InvoicesSequenceViewSet(ModelViewSet):
         return serializers.InvoicesSequenceSerializer
 
 
-class InvoicesHeaderListFull(ModelViewSet):
+class InvoicesHeaderListFull(ElectronicHeaderProtection, ModelViewSet):
     queryset = InvoicesHeader.objects.select_related('company').select_related('customer').all()
     serializer_class = serializers.InvoicesHeaderSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -285,10 +287,12 @@ class InvoicesCustomerViewSet(ModelViewSet):
 
 
 @api_view(['GET','POST'])
+@transaction.atomic
 def cancel_invoice(request, invoice):
     if request.method == 'POST':
         try:
-            invoice_header = InvoicesHeader.objects.get(sequence=invoice)
+            invoice_header = InvoicesHeader.objects.select_for_update().get(sequence=invoice)
+            require_editable_sale(invoice_header.pk)
             invoice_header.subtotal = 0
             invoice_header.discount = 0
             invoice_header.itbis = 0

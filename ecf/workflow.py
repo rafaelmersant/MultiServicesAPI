@@ -5,6 +5,7 @@ import hashlib
 import hmac
 from html import escape as html_escape
 import json
+import os
 from io import BytesIO
 import re
 import sqlite3
@@ -22,6 +23,7 @@ from lxml import etree
 
 from .certificate import load_pkcs12
 from .config import Settings
+from .issuance import validate_production_record, link_accepted_sale
 from .dgii_auth import DGIIAuthenticator
 from .dgii_reception import DGIIReceptionClient, ECFResult, ReceptionResponse
 from .dgii_rfce import DGIIRFCEClient, RFCEReceipt
@@ -90,18 +92,23 @@ def project_path(*parts: str) -> Path:
     return Path(django_settings.BASE_DIR).joinpath(*parts)
 
 
-def _settings_for_record(record: ElectronicInvoice) -> Settings:
+def _settings_for_record(record: ElectronicInvoice, *, require_range: bool = True) -> Settings:
     load_dotenv(project_path(".env"), override=False)
     try:
         config = Settings.from_env()
     except Exception as exc:
         raise ECFWorkflowError("La configuración DGII o del certificado no está completa.") from exc
-    if record.environment == ECFEnvironment.PROD:
-        raise ECFWorkflowError("El flujo de envío productivo no está habilitado.")
+    try:
+        if require_range:
+            validate_production_record(record)
+    except ValueError as exc:
+        raise ECFWorkflowError(str(exc)) from exc
     if config.environment != record.environment:
         raise ECFWorkflowError(
             "El ambiente DGII configurado no coincide con el ambiente del documento."
         )
+    if record.environment == ECFEnvironment.PROD and not config.expected_tax_id:
+        raise ECFWorkflowError("Configura ECF_EXPECTED_TAX_ID antes de emitir en producción.")
     _validate_expected_tax_id(config.expected_tax_id, record.company.rnc)
     return config
 
@@ -243,7 +250,7 @@ def _linked_sale_values(record: ElectronicInvoice) -> dict[str, str]:
             "FechaEmision": invoice.creationDate.astimezone(
                 ZoneInfo("America/Santo_Domingo")
             ).strftime("%d-%m-%Y"),
-            "TipoIngresos": "01",
+            "TipoIngresos": values.get("TipoIngresos", "01"),
             "TipoPago": "1" if invoice.paymentMethod == "CASH" else "2",
         }
     )
@@ -268,6 +275,7 @@ def _linked_sale_values(record: ElectronicInvoice) -> dict[str, str]:
         values.pop("CorreoEmisor", None)
 
     line_gross: list[Decimal] = []
+    line_discounts: list[Decimal] = []
     line_tax: list[Decimal] = []
     line_codes: list[int] = []
     amount_indicators: set[int] = set()
@@ -278,24 +286,28 @@ def _linked_sale_values(record: ElectronicInvoice) -> dict[str, str]:
         quantity = Decimal(detail.quantity)
         price = Decimal(detail.price)
         tax = Decimal(detail.itbis)
-        discount = Decimal(detail.discount) * quantity
-        if quantity <= 0 or price < 0 or tax < 0 or discount != 0:
+        # InvoicesDetail stores the discount for the entire line, not per unit.
+        discount = _money(Decimal(detail.discount))
+        if quantity <= 0 or quantity != quantity.quantize(Decimal("0.01")) or price < 0 or tax < 0 or discount < 0:
             raise ECFWorkflowError(
-                "La factura contiene cantidades, descuentos o impuestos que requieren revisión manual."
+                "La factura contiene cantidades (máximo dos decimales), descuentos o impuestos inválidos."
             )
         gross = _money(quantity * price)
+        if discount > gross:
+            raise ECFWorkflowError("El descuento de una línea supera su importe.")
+        net = gross - discount
         tax = _money(tax)
 
         code_key = f"IndicadorFacturacion[{index}]"
-        supplied_code = values.get(code_key)
+        supplied_code = values.get(code_key) or values.get("zero_tax_treatment") if tax == 0 else values.get(code_key)
         if tax == 0:
             if supplied_code not in {"3", "4"}:
                 raise ECFWorkflowError(
                     f"Indica si la línea {index} es tasa ITBIS 0 (3) o exenta (4)."
                 )
             code = int(supplied_code)
-            amount_indicators.add(0)
-            base = gross
+            values[code_key] = str(code)
+            base = net
         else:
             inclusive = None
             code = None
@@ -316,12 +328,16 @@ def _linked_sale_values(record: ElectronicInvoice) -> dict[str, str]:
                     f"El indicador de facturación de la línea {index} no coincide con el ITBIS guardado."
                 )
             values[code_key] = str(code)
-            base = gross - tax if inclusive else gross
+            if discount:
+                rate = {1: Decimal("0.18"), 2: Decimal("0.16")}[code]
+                tax = _money(net * rate / (1 + rate) if inclusive else net * rate)
+            base = net - tax if inclusive else net
             tax_by_code[code] += tax
 
         line_codes.append(code)
         base_by_code[code] += base
-        line_gross.append(gross)
+        line_gross.append(net)
+        line_discounts.append(discount)
         line_tax.append(tax)
         values.update(
             {
@@ -331,9 +347,11 @@ def _linked_sale_values(record: ElectronicInvoice) -> dict[str, str]:
                 f"IndicadorBienoServicio[{index}]": "1",
                 f"CantidadItem[{index}]": format(quantity.quantize(Decimal("0.01")), ".2f"),
                 f"PrecioUnitarioItem[{index}]": format(price.quantize(Decimal("0.0001")), ".4f"),
-                f"MontoItem[{index}]": _amount_text(gross),
+                f"MontoItem[{index}]": _amount_text(net),
             }
         )
+        if discount:
+            values[f"DescuentoMonto[{index}]"] = _amount_text(discount)
         if detail.product.measure and detail.product.measure.isdigit():
             values[f"UnidadMedida[{index}]" if len(details) > 1 else "UnidadMedida[1]"] = detail.product.measure
 
@@ -349,7 +367,9 @@ def _linked_sale_values(record: ElectronicInvoice) -> dict[str, str]:
     total_tax = sum(line_tax, Decimal("0"))
     if abs(_money(total_tax) - _money(Decimal(invoice.itbis))) > Decimal("0.02"):
         raise ECFWorkflowError("El ITBIS de las líneas no coincide con el ITBIS de la factura fuente.")
-    if abs(_money(sum(line_gross, Decimal("0"))) - _money(Decimal(invoice.subtotal))) > Decimal("0.02"):
+    if abs(sum(line_discounts, Decimal("0")) - _money(Decimal(invoice.discount))) > Decimal("0.02"):
+        raise ECFWorkflowError("Los descuentos de las líneas no coinciden con el descuento de la factura fuente.")
+    if abs(_money(sum(line_gross, Decimal("0")) + sum(line_discounts, Decimal("0"))) - _money(Decimal(invoice.subtotal))) > Decimal("0.02"):
         raise ECFWorkflowError("Las líneas e-CF no coinciden con el subtotal de la factura fuente.")
 
     taxable_base = sum((base_by_code[n] for n in (1, 2, 3)), Decimal("0"))
@@ -416,9 +436,13 @@ def _apply_registered_issuer_identity(values: dict[str, str], company) -> None:
 
 
 def build_unsigned_xml(record: ElectronicInvoice) -> bytes:
+    try:
+        validate_production_record(record)
+    except ValueError as exc:
+        raise ECFWorkflowError(str(exc)) from exc
     if not record.encf or not record.sequence_id:
         raise ECFWorkflowError("Reserva primero un e-NCF para el borrador.")
-    if not isinstance(record.payload, dict) or not record.payload:
+    if not isinstance(record.payload, dict) or (not record.payload and not record.invoice_id):
         raise ECFWorkflowError("El borrador no contiene datos fiscales estructurados.")
 
     values = (
@@ -431,6 +455,11 @@ def build_unsigned_xml(record: ElectronicInvoice) -> bytes:
     values.setdefault("Version", "1.0")
     values["TipoeCF"] = record.document_type
     values["eNCF"] = record.encf
+    if record.environment == ECFEnvironment.PROD:
+        if record.document_type not in {"32", "34"} and record.sequence.due_date:
+            values["FechaVencimientoSecuencia"] = record.sequence.due_date.strftime("%d-%m-%Y")
+        else:
+            values.pop("FechaVencimientoSecuencia", None)
     values["FechaHoraFirma"] = datetime.now(
         ZoneInfo("America/Santo_Domingo")
     ).strftime("%d-%m-%Y %H:%M:%S")
@@ -622,6 +651,8 @@ def sign_rfce_record(record: ElectronicInvoice) -> bytes:
 
 
 def _rfce_registry_for_environment(environment: str) -> ECFTestRegistry:
+    if environment == ECFEnvironment.PROD:
+        return ECFTestRegistry(_production_registry_path(rfce=True))
     name = (
         "test_run_registry_cert_rfce.sqlite3"
         if environment == ECFEnvironment.CERT
@@ -849,10 +880,38 @@ def send_rfce_record(record: ElectronicInvoice) -> RFCEReceipt:
         sequence_used=receipt.sequence_used,
         notes="; ".join(message.value for message in receipt.messages if message.value) or None,
     )
+    if record.environment == ECFEnvironment.PROD:
+        # Production consumption <250,000 is resolved by the RFCE service;
+        # uploading the full e-CF in the certification portal is not required.
+        record.status = {
+            RFCEStatus.ACCEPTED: ElectronicInvoice.Status.ACCEPTED,
+            RFCEStatus.ACCEPTED_CONDITIONAL: ElectronicInvoice.Status.ACCEPTED_CONDITIONAL,
+            RFCEStatus.REJECTED: ElectronicInvoice.Status.REJECTED,
+        }.get(record.rfce_status, ElectronicInvoice.Status.UNCERTAIN)
+        record.dgii_code = receipt.code
+        record.dgii_status = receipt.status
+        record.dgii_messages = record.rfce_messages
+        record.sent_at = record.rfce_sent_at
+        record.resolved_at = record.rfce_resolved_at
+        record.save(update_fields=("status", "dgii_code", "dgii_status", "dgii_messages", "sent_at", "resolved_at", "updated_at"))
+        try:
+            link_accepted_sale(record)
+        except ValueError as exc:
+            raise ECFWorkflowError(str(exc)) from exc
     return receipt
 
 
+def _production_registry_path(*, rfce=False) -> Path:
+    # Keep transport state out of MEDIA_ROOT, which may be served by Nginx.
+    folder = Path(os.getenv("ECF_PRODUCTION_REGISTRY_DIR", str(project_path("private_ecf_state"))))
+    if not folder.is_absolute():
+        raise ECFWorkflowError("ECF_PRODUCTION_REGISTRY_DIR debe ser una ruta absoluta privada.")
+    return folder / ("registry-rfce-prod.sqlite3" if rfce else "registry-prod.sqlite3")
+
+
 def _registry_for_environment(environment: str) -> ECFTestRegistry:
+    if environment == ECFEnvironment.PROD:
+        return ECFTestRegistry(_production_registry_path())
     name = (
         "test_run_registry_cert.sqlite3"
         if environment == ECFEnvironment.CERT
@@ -867,6 +926,11 @@ def registries_for_environment(
 ) -> list[ECFTestRegistry]:
     registries = [_registry_for_environment(environment)]
     if document_type == "32":
+        if environment == ECFEnvironment.PROD:
+            rfce_path = _production_registry_path(rfce=True)
+            if rfce_path.is_file():
+                registries.append(ECFTestRegistry(rfce_path))
+            return registries
         rfce_name = (
             "test_run_registry_cert_rfce.sqlite3"
             if environment == ECFEnvironment.CERT
@@ -950,6 +1014,8 @@ def send_record(record: ElectronicInvoice) -> ReceptionResponse:
         )
         total_nodes = root.xpath(".//*[local-name()='MontoTotal']")
         if total_nodes and Decimal(total_nodes[0].text or "0") < Decimal("250000"):
+            if record.environment == ECFEnvironment.PROD:
+                raise ECFWorkflowError("Para consumo menor de DOP 250,000 envía el RFCE firmado.")
             raise ECFWorkflowError(
                 "El e-CF tipo 32 menor de DOP 250,000 se carga en el portal DGII después de aceptar su RFCE; descarga el XML firmado."
             )
@@ -979,10 +1045,19 @@ def send_record(record: ElectronicInvoice) -> ReceptionResponse:
         reference = (references[0].text or "").strip() if references else ""
         if not reference:
             raise ECFWorkflowError("La nota e-CF debe referenciar un comprobante modificado.")
-        _registry_for_environment(record.environment).require_accepted_reference(
-            rnc=rnc,
-            encf=reference,
-        )
+        if record.environment == ECFEnvironment.PROD:
+            from sales.models import InvoicesHeader
+            accepted_reference = ElectronicInvoice.objects.filter(
+                company_id=record.company_id, environment="prod", encf=reference,
+                status__in=(ElectronicInvoice.Status.ACCEPTED, ElectronicInvoice.Status.ACCEPTED_CONDITIONAL),
+            ).exists()
+            legacy_reference = reference.startswith("B") and InvoicesHeader.objects.filter(
+                company_id=record.company_id, ncf=reference, invoiceStatus="",
+            ).exists()
+            if not accepted_reference and not legacy_reference:
+                raise ECFWorkflowError("La nota debe referenciar un comprobante real de esta empresa, aceptado o tradicional registrado.")
+        else:
+            _registry_for_environment(record.environment).require_accepted_reference(rnc=rnc, encf=reference)
 
     try:
         certificate = load_pkcs12(config.certificate_path, config.certificate_password)
@@ -1050,7 +1125,7 @@ def query_record_result(record: ElectronicInvoice) -> ECFResult:
     }:
         raise ECFWorkflowError("El registro no tiene un TrackId pendiente de consulta.")
 
-    config = _settings_for_record(record)
+    config = _settings_for_record(record, require_range=False)
     try:
         certificate = load_pkcs12(config.certificate_path, config.certificate_password)
         token = DGIIAuthenticator(config, certificate).authenticate().token
@@ -1103,6 +1178,10 @@ def query_record_result(record: ElectronicInvoice) -> ECFResult:
             if isinstance(message, dict) and message.get("valor")
         ) or None,
     )
+    try:
+        link_accepted_sale(record)
+    except ValueError as exc:
+        raise ECFWorkflowError(str(exc)) from exc
     return result
 
 

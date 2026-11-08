@@ -33,9 +33,10 @@ class ElectronicInvoiceSequence(models.Model):
         default=ECFEnvironment.CERT,
     )
     document_type = models.CharField(max_length=3)
-    authorized_start = models.PositiveIntegerField(null=True, blank=True)
-    authorized_end = models.PositiveIntegerField(null=True, blank=True)
-    current = models.PositiveIntegerField(null=True, blank=True)
+    authorized_start = models.PositiveBigIntegerField(null=True, blank=True)
+    authorized_end = models.PositiveBigIntegerField(null=True, blank=True)
+    current = models.PositiveBigIntegerField(null=True, blank=True)
+    authorization_reference = models.CharField(max_length=200, blank=True)
     due_date = models.DateField(null=True, blank=True)
     active = models.BooleanField(default=False)
     creation_date = models.DateTimeField(auto_now_add=True)
@@ -46,8 +47,8 @@ class ElectronicInvoiceSequence(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=("company", "environment", "document_type"),
-                name="ecf_unique_company_env_type_sequence",
+                fields=("company", "environment", "document_type", "authorized_start"),
+                name="ecf_unique_company_env_type_start",
             ),
         ]
 
@@ -69,6 +70,8 @@ class ElectronicInvoiceSequence(models.Model):
                 raise ValueError("La secuencia no tiene un rango autorizado configurado.")
             if sequence.authorized_start > sequence.authorized_end:
                 raise ValueError("El rango autorizado de la secuencia no es válido.")
+            from .issuance import validate_sequence
+            validate_sequence(sequence)
 
             next_value = (
                 sequence.authorized_start
@@ -131,7 +134,7 @@ class ElectronicInvoice(models.Model):
         related_name='electronic_invoices',
     )
     document_type = models.CharField(max_length=3)
-    encf = models.CharField(max_length=13, null=True, blank=True, unique=True)
+    encf = models.CharField(max_length=13, null=True, blank=True)
     status = models.CharField(
         max_length=24,
         choices=Status.choices,
@@ -168,6 +171,14 @@ class ElectronicInvoice(models.Model):
     resolved_at = models.DateTimeField(null=True, blank=True)
 
     objects = models.Manager()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("company", "environment", "encf"),
+                name="ecf_unique_company_env_encf",
+            ),
+        ]
 
     def __str__(self) -> str:
         return self.encf or f'{self.company_id}: {self.document_type}'

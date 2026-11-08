@@ -1,6 +1,8 @@
 from decimal import Decimal
 
-from django.db import IntegrityError
+import os
+from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.http import HttpResponse
 from django.core.files.base import ContentFile
 from django.utils import timezone
@@ -16,7 +18,7 @@ from sales.models import InvoicesHeader
 
 from .authentication import ECFUserAuthentication
 from .models import ECF_DOCUMENT_TYPES, ElectronicInvoice, ElectronicInvoiceSequence, RFCEStatus
-from .permissions import ECFAdminOrOwnerPermission
+from .permissions import ECFAdminOrOwnerPermission, ECFCompanyAccessPermission
 from .serializers import ElectronicInvoiceSerializer, ElectronicInvoiceSequenceSerializer
 from .exceptions import ECFError
 from .workflow import (
@@ -32,12 +34,13 @@ from .workflow import (
     representation_pdf_identity_is_current,
     _registry_for_environment,
     used_encfs_for_company,
+    _linked_sale_values,
 )
 
 
 class ECFCompanyViewSet(ModelViewSet):
     authentication_classes = (ECFUserAuthentication,)
-    permission_classes = (IsAuthenticated, ECFAdminOrOwnerPermission)
+    permission_classes = (IsAuthenticated, ECFCompanyAccessPermission)
     http_method_names = ("get", "post", "head", "options")
 
     def get_queryset(self):
@@ -48,13 +51,32 @@ class ECFCompanyViewSet(ModelViewSet):
     def get_serializer_class(self):
         return ElectronicInvoiceSerializer
 
+    @action(detail=False, methods=("get",), url_path="sale-representation")
+    def sale_representation(self, request):
+        invoice_id = request.query_params.get("invoice", "")
+        if not str(invoice_id).isdigit():
+            raise ValidationError("Indica el identificador de la venta.")
+        record = self.get_queryset().filter(environment="prod", invoice_id=invoice_id).first()
+        if record is None:
+            raise ValidationError("No existe un e-CF productivo asociado a esta venta para tu empresa.")
+        try:
+            pdf = build_representation_pdf(record)
+        except ECFError as exc:
+            raise ValidationError(str(exc)) from exc
+        response = HttpResponse(pdf, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="RI-{record.encf}.pdf"'
+        return response
+
     @action(detail=False, methods=("get",), url_path="eligible-sales")
     def eligible_sales(self, request):
         """Expose active source transactions without changing legacy invoices."""
         rows = InvoicesHeader.objects.filter(
             company_id=request.user.company_id,
             invoiceStatus="",
-        ).exclude(electronic_invoice__isnull=False).select_related("customer").order_by("-creationDate")[:200]
+        ).exclude(electronic_invoice__isnull=False)
+        if request.query_params.get("environment") == "prod":
+            rows = rows.filter(Q(ncf__isnull=True) | Q(ncf=""))
+        rows = rows.select_related("customer").order_by("-creationDate")[:200]
         return Response([
             {
                 "id": row.pk,
@@ -68,6 +90,19 @@ class ECFCompanyViewSet(ModelViewSet):
             for row in rows
         ])
 
+    @action(detail=False, methods=("get",), url_path="configuration")
+    def configuration(self, request):
+        configured = os.getenv("DGII_ENVIRONMENT", "precert").strip().lower()
+        return Response({
+            "environment": configured,
+            "production_requires_authorized_range": True,
+            "production_range_configured": ElectronicInvoiceSequence.objects.filter(
+                company_id=request.user.company_id, environment="prod", active=True,
+                authorized_start__isnull=False, authorized_end__isnull=False,
+            ).exclude(authorization_reference="").exists(),
+        })
+
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
         invoice_id = request.data.get("invoice")
         document_type = str(request.data.get("document_type") or "")
@@ -79,18 +114,24 @@ class ECFCompanyViewSet(ModelViewSet):
         payload = request.data.get("payload") or {}
         if not isinstance(payload, dict):
             raise ValidationError({"payload": "Envía los campos fiscales como un objeto JSON."})
-        if environment not in {"precert", "cert"}:
-            raise ValidationError({"environment": "La emisión de e-CF a producción no está habilitada en esta etapa."})
+        if environment not in {"precert", "cert", "prod"}:
+            raise ValidationError({"environment": "Usa precert, cert o prod."})
+        if environment == "prod" and payload.get("certification_attempt"):
+            raise ValidationError({"payload": "Los casos de certificación no se emiten en producción."})
 
         invoice = None
         if invoice_id not in (None, ""):
-            invoice = InvoicesHeader.objects.filter(
+            invoice = InvoicesHeader.objects.select_for_update().filter(
                 pk=invoice_id,
                 company_id=request.user.company_id,
                 invoiceStatus="",
             ).first()
             if invoice is None:
                 raise ValidationError({"invoice": "La factura no pertenece a esta empresa."})
+            if environment == "prod" and (invoice.ncf or "").strip():
+                raise ValidationError({"invoice": "La venta ya tiene NCF. Selecciona una venta sin comprobante fiscal."})
+        if environment == "prod" and document_type in {"31", "32"} and invoice is None:
+            raise ValidationError({"invoice": "Selecciona una venta real sin NCF para este comprobante."})
 
         try:
             record = ElectronicInvoice.objects.create(
@@ -111,8 +152,9 @@ class ECFCompanyViewSet(ModelViewSet):
         )
 
     @action(detail=True, methods=("post",), url_path="reserve-encf")
+    @transaction.atomic
     def reserve_encf(self, request, pk=None):
-        record = self.get_object()
+        record = self.get_queryset().select_related(None).select_for_update().get(pk=self.get_object().pk)
         if record.status != ElectronicInvoice.Status.DRAFT or record.encf:
             raise ValidationError("Solo se puede asignar e-NCF a un borrador sin secuencia.")
 
@@ -127,6 +169,12 @@ class ECFCompanyViewSet(ModelViewSet):
             raise ValidationError({"sequence": "No existe una secuencia autorizada para este tipo."})
 
         try:
+            if record.environment == "prod" and record.invoice_id:
+                record.invoice = InvoicesHeader.objects.select_for_update().get(pk=record.invoice_id)
+                if (record.invoice.ncf or "").strip():
+                    raise ValueError("La venta ya tiene un NCF tradicional.")
+                if record.document_type in {"31", "32"}:
+                    _linked_sale_values(record)
             used_encfs = _used_encfs_for_sequence(sequence)
             while True:
                 encf = sequence.allocate_encf()
@@ -135,9 +183,24 @@ class ECFCompanyViewSet(ModelViewSet):
             record.sequence = sequence
             record.encf = encf
             record.save(update_fields=("sequence", "encf", "updated_at"))
-        except (ValueError, RuntimeError) as exc:
+        except (ValueError, RuntimeError, ECFError) as exc:
             raise ValidationError({"sequence": str(exc)}) from exc
 
+        return Response(self.get_serializer(record).data)
+
+    @action(detail=True, methods=("post",), url_path="update-draft")
+    @transaction.atomic
+    def update_draft(self, request, pk=None):
+        record = self.get_queryset().select_related(None).select_for_update().get(pk=self.get_object().pk)
+        if record.status != ElectronicInvoice.Status.DRAFT or record.encf:
+            raise ValidationError("Solo se ajustan datos fiscales antes de reservar el e-NCF.")
+        payload = request.data.get("payload")
+        if not isinstance(payload, dict):
+            raise ValidationError({"payload": "Los datos fiscales deben ser un objeto JSON."})
+        if record.environment == "prod" and payload.get("certification_attempt"):
+            raise ValidationError("Los casos de certificación no se emiten en producción.")
+        record.payload = payload
+        record.save(update_fields=("payload", "updated_at"))
         return Response(self.get_serializer(record).data)
 
     @action(detail=True, methods=("post",), url_path="build-xml")
@@ -281,6 +344,8 @@ class ECFCompanyViewSet(ModelViewSet):
     @action(detail=True, methods=("post",), url_path="portal-result")
     def portal_result(self, request, pk=None):
         record = self.get_object()
+        if record.environment != "cert":
+            raise ValidationError("La confirmación manual del portal solo aplica a certificación.")
         result = str(request.data.get("result") or "").strip().lower()
         if result not in {"accepted", "rejected"}:
             raise ValidationError({"result": "Registra accepted o rejected según el portal DGII."})
@@ -369,8 +434,6 @@ class ECFSequenceViewSet(ModelViewSet):
         ).order_by("document_type", "id")
 
     def perform_create(self, serializer):
-        if serializer.validated_data.get("environment") == "prod":
-            raise ValidationError("La configuración de secuencias productivas no está habilitada en esta etapa.")
         serializer.save(
             company_id=self.request.user.company_id,
             created_user=self.request.user.email,
@@ -378,5 +441,9 @@ class ECFSequenceViewSet(ModelViewSet):
 
 
 def _used_encfs_for_sequence(sequence):
+    if sequence.environment == "prod":
+        return set(ElectronicInvoice.objects.filter(
+            company_id=sequence.company_id, environment="prod", encf__isnull=False,
+        ).values_list("encf", flat=True))
     return used_encfs_for_company(sequence.company.rnc)
 

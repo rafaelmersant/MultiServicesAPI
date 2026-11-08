@@ -142,6 +142,7 @@ class ElectronicInvoiceSequenceSerializer(serializers.ModelSerializer):
             "document_type",
             "authorized_start",
             "authorized_end",
+            "authorization_reference",
             "current",
             "due_date",
             "active",
@@ -161,8 +162,8 @@ class ElectronicInvoiceSequenceSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("El tipo de e-CF debe tener dos dígitos.")
         if document_type not in ECF_DOCUMENT_TYPES:
             raise serializers.ValidationError("El tipo de e-CF no forma parte del set de certificación habilitado.")
-        if environment not in {"precert", "cert"}:
-            raise serializers.ValidationError("Solo se permiten ambientes precert y cert.")
+        if environment not in {"precert", "cert", "prod"}:
+            raise serializers.ValidationError("El ambiente debe ser precert, cert o prod.")
         if self.instance is not None and (
             document_type != self.instance.document_type
             or environment != self.instance.environment
@@ -174,8 +175,22 @@ class ElectronicInvoiceSequenceSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Activa la secuencia solo después de configurar el rango DGII.")
         if start is not None and end is not None and start > end:
             raise serializers.ValidationError("El inicio del rango debe ser menor o igual al final.")
-        if start is not None and (start < 1 or end > 10_000_000):
-            raise serializers.ValidationError("El rango de certificación debe estar entre 1 y 10,000,000.")
+        maximum = 9_999_999_999 if environment == "prod" else 10_000_000
+        if start is not None and (start < 1 or end > maximum):
+            raise serializers.ValidationError(f"El rango debe estar entre 1 y {maximum:,}.")
+        if environment == "prod" and start is not None:
+            from types import SimpleNamespace
+            from .issuance import validate_sequence
+            sequence = SimpleNamespace(
+                environment=environment, document_type=document_type,
+                authorized_start=start, authorized_end=end, active=True,
+                authorization_reference=attrs.get("authorization_reference", getattr(self.instance, "authorization_reference", "")),
+                due_date=attrs.get("due_date", getattr(self.instance, "due_date", None)),
+            )
+            try:
+                validate_sequence(sequence)
+            except ValueError as exc:
+                raise serializers.ValidationError(str(exc)) from exc
         if current is not None and (
             start != getattr(self.instance, "authorized_start")
             or end != getattr(self.instance, "authorized_end")
@@ -183,4 +198,14 @@ class ElectronicInvoiceSequenceSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "No se puede cambiar un rango después de reservar e-NCF."
             )
+        request = self.context.get("request")
+        if start is not None and request is not None:
+            overlaps = ElectronicInvoiceSequence.objects.filter(
+                company_id=request.user.company_id, environment=environment,
+                document_type=document_type, authorized_start__lte=end, authorized_end__gte=start,
+            )
+            if self.instance:
+                overlaps = overlaps.exclude(pk=self.instance.pk)
+            if overlaps.exists():
+                raise serializers.ValidationError("El rango se solapa con otro rango ya registrado para este ambiente y tipo.")
         return attrs
