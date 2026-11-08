@@ -10,6 +10,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # MySQL may use the old composite index for company_id's FK. Install
+        # its replacement (same leading column) before removing that index.
+        migrations.AddConstraint(
+            model_name='electronicinvoicesequence',
+            constraint=models.UniqueConstraint(fields=('company', 'environment', 'document_type', 'authorized_start'), name='ecf_unique_company_env_type_start'),
+        ),
         migrations.RemoveConstraint(
             model_name='electronicinvoicesequence',
             name='ecf_unique_company_env_type_sequence',
@@ -38,10 +44,6 @@ class Migration(migrations.Migration):
             model_name='electronicinvoicesequence',
             name='current',
             field=models.PositiveBigIntegerField(blank=True, null=True),
-        ),
-        migrations.AddConstraint(
-            model_name='electronicinvoicesequence',
-            constraint=models.UniqueConstraint(fields=('company', 'environment', 'document_type', 'authorized_start'), name='ecf_unique_company_env_type_start'),
         ),
         migrations.AddConstraint(
             model_name='electronicinvoice',
