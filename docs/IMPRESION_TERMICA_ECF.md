@@ -9,9 +9,9 @@ abre el diálogo de impresión. El botón **PDF e-CF** sigue disponible.
 
 Seleccionar la impresora y el mismo papel usado en la muestra de calibración,
 escala **100%**, y desactivar encabezados/pies del navegador. El perfil aplica
-internamente la ampliación 1.39 que el usuario comprobó en el diálogo y agrega
+internamente la ampliación 1.38 (un punto menos que el 139% comprobado) y agrega
 2 mm de margen izquierdo sin volver a escalar manualmente. El contenido base
-de 76 mm pasa a 105.64 mm; el contenedor reserva 108 mm para contenido y margen.
+de 76 mm pasa a 104.88 mm; el contenedor reserva 108 mm para contenido y margen.
 Este perfil debe utilizarse con un papel/controlador que admita ese ancho efectivo;
 no es un perfil universal para rollos de 80 o 58 mm. El largo lo determina el
 controlador. Validar la impresión física con el mismo papel de la calibración.

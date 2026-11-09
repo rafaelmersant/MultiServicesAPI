@@ -9,6 +9,7 @@ from administration.serializers import CompanySerializer, ProviderReducedSeriali
 
 # Django REST framework
 from rest_framework import serializers
+from decimal import Decimal
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):
@@ -28,7 +29,27 @@ class ProductCategoryReducedSerializer(serializers.ModelSerializer):
         fields = ('id', 'description', 'company_id', 'creationDate')
 
 
-class ProductSerializer(serializers.ModelSerializer):
+class ProductTaxValidationMixin:
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        # Metadata-only updates must not rewrite historical product values.
+        old = self.instance
+        price = attrs.get('price', getattr(old, 'price', None))
+        tax = attrs.get('itbis', getattr(old, 'itbis', None))
+        changed = old is None or any(
+            key in attrs and attrs[key] != getattr(old, key)
+            for key in ('price', 'itbis')
+        )
+        if changed and price is not None and tax is not None:
+            if price < 0 or tax < 0:
+                raise serializers.ValidationError({'itbis': 'Precio e ITBIS no pueden ser negativos.'})
+            if tax and not any(abs(tax - price * rate / (100 + rate)) <= Decimal('0.001')
+                               for rate in (Decimal('18'), Decimal('16'))):
+                raise serializers.ValidationError({'itbis': 'El ITBIS no corresponde al precio de venta con impuesto incluido. Recalcule el precio e ITBIS del producto.'})
+        return attrs
+
+
+class ProductSerializer(ProductTaxValidationMixin, serializers.ModelSerializer):
     company = CompanySerializer(many=False, read_only=True)
     company_id = serializers.IntegerField(write_only=True)
 
@@ -42,7 +63,7 @@ class ProductSerializer(serializers.ModelSerializer):
                   'createdUser', 'minimumStock', 'quantity', 'updated', 'ocurrences', 'discount_max')
 
 
-class ProductReducedSerializer(serializers.ModelSerializer):
+class ProductReducedSerializer(ProductTaxValidationMixin, serializers.ModelSerializer):
     company_id = serializers.IntegerField()
     category_id = serializers.IntegerField()
 
