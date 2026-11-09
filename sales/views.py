@@ -18,6 +18,7 @@ from ecf.sale_protection import ElectronicHeaderProtection, ElectronicDetailProt
 
 # Serializers
 from . import serializers
+from .quotation_totals import QuotationHeaderTotalsMixin, QuotationDetailTotalsMixin
 
 # Models
 from .models import InvoicesHeader, InvoicesDetail, InvoicesSequence, InvoicesLeadHeader,  \
@@ -238,7 +239,7 @@ class InvoicesLeadsDetailViewSet(ModelViewSet):
         return serializers.InvoicesLeadDetailSerializer
 
 
-class QuotationsHeaderViewSet(ModelViewSet):
+class QuotationsHeaderViewSet(QuotationHeaderTotalsMixin, ModelViewSet):
     queryset = QuotationsHeader.objects.prefetch_related('company').all()
     pagination_class = StandardResultsSetPaginationHigh
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -251,7 +252,7 @@ class QuotationsHeaderViewSet(ModelViewSet):
         return serializers.QuotationsHeaderSerializer
   
 
-class QuotationsDetailViewSet(ModelViewSet):
+class QuotationsDetailViewSet(QuotationDetailTotalsMixin, ModelViewSet):
     queryset = QuotationsDetail.objects.select_related('header').select_related('product').all()
     serializer_class = serializers.QuotationsDetailSerializer
     filter_backends = [DjangoFilterBackend,]
