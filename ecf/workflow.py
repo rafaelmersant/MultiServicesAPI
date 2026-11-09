@@ -304,7 +304,8 @@ def _linked_sale_values(record: ElectronicInvoice) -> dict[str, str]:
         if discount > gross:
             raise ECFWorkflowError("El descuento de una línea supera su importe.")
         net = gross - discount
-        tax = _money(tax)
+        # Infer the rate using the stored precision (three or more decimals).
+        # For RD$6, 0.915 is 18% included; rounding it to 0.92 first distorts the ratio.
 
         code_key = f"IndicadorFacturacion[{index}]"
         supplied_code = values.get(code_key) or values.get("zero_tax_treatment") if tax == 0 else values.get(code_key)
@@ -336,6 +337,7 @@ def _linked_sale_values(record: ElectronicInvoice) -> dict[str, str]:
                     f"El indicador de facturación de la línea {index} no coincide con el ITBIS guardado."
                 )
             values[code_key] = str(code)
+            tax = _money(tax)
             if discount:
                 rate = {1: Decimal("0.18"), 2: Decimal("0.16")}[code]
                 tax = _money(net * rate / (1 + rate) if inclusive else net * rate)

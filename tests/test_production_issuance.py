@@ -207,3 +207,28 @@ def test_cashier_can_read_own_company_ecf_but_not_manage_ranges_or_send():
     assert permission.has_permission(request, None)
     request.method = "POST"
     assert not permission.has_permission(request, None)
+
+
+@pytest.mark.parametrize("quantity,price,tax", [("8", "0.75", "0.915"), ("1", "6", "0.915"), ("1", "9", "1.373")])
+def test_small_price_preserves_tax_precision_until_rate_inference(quantity, price, tax):
+    record, detail = sale_record()
+    detail.quantity, detail.price, detail.itbis = map(Decimal, (quantity, price, tax))
+    detail.discount = Decimal("0")
+    record.invoice.discount = Decimal("0")
+    record.invoice.subtotal = detail.quantity * detail.price
+    record.invoice.itbis = Decimal(tax)
+    with patch("sales.models.InvoicesDetail.objects.filter") as details:
+        details.return_value.select_related.return_value.order_by.return_value = [detail]
+        xml = build_unsigned_xml(record)
+    assert b"<IndicadorFacturacion>1</IndicadorFacturacion>" in xml
+    assert detail.itbis == Decimal(tax)
+
+
+def test_wrong_small_price_tax_is_still_rejected():
+    record, detail = sale_record()
+    detail.quantity, detail.price, detail.itbis = Decimal("1"), Decimal("9"), Decimal("1.983")
+    detail.discount = Decimal("0")
+    with patch("sales.models.InvoicesDetail.objects.filter") as details:
+        details.return_value.select_related.return_value.order_by.return_value = [detail]
+        with pytest.raises(ECFWorkflowError, match="no se puede inferir"):
+            _linked_sale_values(record)
