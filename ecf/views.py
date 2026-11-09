@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import date
 
 import os
 from django.db import IntegrityError, transaction
@@ -150,6 +151,13 @@ class ECFCompanyViewSet(ModelViewSet):
         ).exclude(electronic_invoice__isnull=False)
         if request.query_params.get("environment") == "prod":
             rows = rows.filter(Q(ncf__isnull=True) | Q(ncf=""))
+        start_date = request.query_params.get("start_date")
+        if start_date:
+            try:
+                start_date = date.fromisoformat(start_date)
+            except (ValueError, TypeError):
+                raise ValidationError({"start_date": "Usa una fecha válida AAAA-MM-DD."})
+            rows = rows.filter(creationDate__date__gte=start_date)
         rows = rows.select_related("customer").order_by("-creationDate")[:200]
         return Response([
             {
