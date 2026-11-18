@@ -362,8 +362,8 @@ def _linked_sale_values(record: ElectronicInvoice) -> dict[str, str]:
         )
         if discount:
             values[f"DescuentoMonto[{index}]"] = _amount_text(discount)
-        if detail.product.measure and detail.product.measure.isdigit():
-            values[f"UnidadMedida[{index}]" if len(details) > 1 else "UnidadMedida[1]"] = detail.product.measure
+        # Product.measure is the legacy warehouse/location field ("Almacen"),
+        # not a DGII unit code. Keep only explicitly supplied fiscal units.
 
     if len(amount_indicators) > 1:
         raise ECFWorkflowError(

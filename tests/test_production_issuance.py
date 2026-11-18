@@ -232,3 +232,23 @@ def test_wrong_small_price_tax_is_still_rejected():
         details.return_value.select_related.return_value.order_by.return_value = [detail]
         with pytest.raises(ECFWorkflowError, match="no se puede inferir"):
             _linked_sale_values(record)
+
+
+@pytest.mark.parametrize("warehouse", ["805", "43", "ALMACEN A", ""])
+def test_warehouse_is_not_used_as_fiscal_unit(warehouse):
+    record, detail = sale_record()
+    detail.product.measure = warehouse
+    with patch("sales.models.InvoicesDetail.objects.filter") as details:
+        details.return_value.select_related.return_value.order_by.return_value = [detail]
+        xml = build_unsigned_xml(record)
+    assert b"<UnidadMedida>" not in xml
+
+
+def test_explicit_fiscal_unit_is_preserved_instead_of_warehouse():
+    record, detail = sale_record()
+    detail.product.measure = "805"
+    record.payload = {"UnidadMedida[1]": "43"}
+    with patch("sales.models.InvoicesDetail.objects.filter") as details:
+        details.return_value.select_related.return_value.order_by.return_value = [detail]
+        xml = build_unsigned_xml(record)
+    assert b"<UnidadMedida>43</UnidadMedida>" in xml
